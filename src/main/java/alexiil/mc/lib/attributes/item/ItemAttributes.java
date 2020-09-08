@@ -29,7 +29,7 @@ import net.minecraft.inventory.SidedInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.util.collection.DefaultedList;
+import stolen.DefaultedList;
 import net.minecraft.util.math.Direction;
 
 import alexiil.mc.lib.attributes.Attribute;

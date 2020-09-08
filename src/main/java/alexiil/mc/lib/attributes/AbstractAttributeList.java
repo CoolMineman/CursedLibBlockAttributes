@@ -10,7 +10,7 @@ package alexiil.mc.lib.attributes;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import net.minecraft.util.collection.DefaultedList;
+import stolen.DefaultedList;
 
 /** The base class for {@link AttributeList} and {@link ItemAttributeList}. */
 public abstract class AbstractAttributeList<T> {
