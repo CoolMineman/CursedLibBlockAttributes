@@ -1,7 +1,26 @@
+buildscript {
+    repositories {
+    	mavenCentral()
+		jcenter()
+        maven {
+            name = "Fabric"
+            url = "https://maven.fabricmc.net/"
+        }
+		maven { 
+			name = "Jitpack"
+			url 'https://jitpack.io/'
+		}
+	}
+	dependencies {
+        classpath 'com.github.Chocohead:Fabric-Loom:bbaa5d7'
+	}
+}
+
 plugins {
-    id 'fabric-loom' version '0.4-SNAPSHOT'
     id 'net.minecrell.licenser' version '0.4.1'
 }
+
+apply plugin: "fabric-loom"
 
 apply plugin: 'maven-publish' // for uploading to a maven repo
 
@@ -16,7 +35,7 @@ repositories {
     mavenLocal()
     maven { name="Modmuss50"; url="https://maven.modmuss50.me/" }
     maven { name="BuildCraft"; url="https://mod-buildcraft.com/maven/" }
-    //maven { name="Jitpack"; url = "https://jitpack.io" }
+    maven { name="Jitpack"; url = "https://jitpack.io" }
 }
 
 archivesBaseName = "libblockatttributes"
@@ -31,21 +50,39 @@ minecraft {
 }
 
 dependencies {
-    minecraft "com.mojang:minecraft:1.16.2"
-    mappings "net.fabricmc:yarn:1.16.2+build.19:v2"
-    modImplementation "net.fabricmc:fabric-loader:0.9.1+build.205"
+    // fabric loader requires log4j, guava, and gson
+	implementation group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.8.1'
+	implementation group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.8.1'
+	implementation 'com.google.guava:guava:28.0-jre'
+	implementation group: 'com.google.code.gson', name: 'gson', version: '2.8.6'
 
-    //Fabric api
-    modImplementation "net.fabricmc.fabric-api:fabric-api:0.18.0+build.397-1.16"
+	// mixin and fabric loader need asm 8
+	implementation 'org.ow2.asm:asm:8.0'
+	implementation 'org.ow2.asm:asm-analysis:8.0'
+	implementation 'org.ow2.asm:asm-commons:8.0'
+	implementation 'org.ow2.asm:asm-tree:8.0'
+	implementation 'org.ow2.asm:asm-util:8.0'
 
-    // Silk API
-    modImplementation("io.github.prospector.silk:SilkAPI:${silk_version}") { transitive = false }
+	//to change the versions see the gradle.properties file
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 
-    // RebornCore
-    modImplementation("RebornCore:RebornCore-${reborncore_mc_release}:${reborncore_version}") { transitive = false }
+	mappings loom.fromCommit("minecraft-cursed-legacy/Plasma", "f900cd3") {spec ->
+		spec.version = "b1.7.3-14"
+	}
 
-    // Item-inventory
-    modImplementation("com.github.emilyploszaj:item-inventory:v1.1.0") { transitive = false }
+	modImplementation "com.github.minecraft-cursed-legacy:cursed-fabric-loader:${project.loader_version}"
+
+	// API. You technically don't need it, but it's extremely useful for not having to write the same code in every mod.
+	modImplementation "com.github.minecraft-cursed-legacy:Cursed-Legacy-API:${project.api_version}"
+
+    // // Silk API
+    // modImplementation("io.github.prospector.silk:SilkAPI:${silk_version}") { transitive = false }
+
+    // // RebornCore
+    // modImplementation("RebornCore:RebornCore-${reborncore_mc_release}:${reborncore_version}") { transitive = false }
+
+    // // Item-inventory
+    // modImplementation("com.github.emilyploszaj:item-inventory:v1.1.0") { transitive = false }
 
     // Misc
     compile "com.google.code.findbugs:jsr305:3.0.1"
