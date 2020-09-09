@@ -7,12 +7,11 @@
  */
 package alexiil.mc.lib.attributes.fluid;
 
-import net.minecraft.fluid.Fluid;
-import net.minecraft.item.BucketItem;
-import net.minecraft.item.ItemStack;
+import net.minecraft.tile.Fluid;
+import net.minecraft.item.ItemInstance;
 
 /** Items that extend {@link BucketItem} should implement this interface to ensure that LBA gets the correct
  * {@link ItemStack} from filling this with a fluid. */
 public interface ICustomBucketItem {
-    ItemStack getFilledBucket(Fluid fluid);
+    ItemInstance getFilledBucket(Fluid fluid);
 }

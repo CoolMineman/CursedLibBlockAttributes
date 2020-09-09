@@ -9,7 +9,7 @@ package alexiil.mc.lib.attributes.fluid;
 
 import java.util.Set;
 
-import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemInstance;
 
 import alexiil.mc.lib.attributes.fluid.volume.FluidKey;
 import alexiil.mc.lib.attributes.fluid.volume.FluidKeys;
@@ -22,7 +22,7 @@ public final class FluidItemUtil {
      * 
      * @return The {@link FluidKey} if the {@link ItemStack} contained any, or {@link FluidKeys#EMPTY} if none were
      *         present. */
-    public static FluidKey getContainedFluid(ItemStack stack) {
+    public static FluidKey getContainedFluid(ItemInstance stack) {
         GroupedFluidInvView inv = FluidAttributes.GROUPED_INV_VIEW.get(stack);
         Set<FluidKey> set = inv.getStoredFluids();
         if (set.isEmpty()) {

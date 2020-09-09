@@ -7,8 +7,8 @@
  */
 package alexiil.mc.lib.attributes.fluid.world;
 
-import net.minecraft.fluid.FlowableFluid;
+import net.minecraft.tile.FlowingFluid;
 
 public interface IFluidBlockMixin {
-    FlowableFluid __fluid();
+    FlowingFluid __fluid();
 }

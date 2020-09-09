@@ -11,19 +11,11 @@ import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
 
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.Player;
 import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.GlassBottleItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.PotionItem;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
+import net.minecraft.entity.player.ServerPlayer;
+import net.minecraft.item.ItemInstance;
+
 
 import alexiil.mc.lib.attributes.CombinableAttribute;
 import alexiil.mc.lib.attributes.fluid.FluidVolumeUtil.FluidTankInteraction;
@@ -40,48 +32,54 @@ import alexiil.mc.lib.attributes.misc.NullVariant;
 import alexiil.mc.lib.attributes.misc.PlayerInvUtil;
 import alexiil.mc.lib.attributes.misc.Reference;
 
-/** 4 base methods for interacting a {@link Reference} of an {@link ItemStack} with a {@link FixedFluidInv},
- * {@link FluidTransferable}, or {@link FluidInsertable}&{@link FluidExtractable} pair.
+/**
+ * 4 base methods for interacting a {@link Reference} of an {@link ItemStack}
+ * with a {@link FixedFluidInv}, {@link FluidTransferable}, or
+ * {@link FluidInsertable}&{@link FluidExtractable} pair.
  * <p>
  * The 4 main methods are:
  * <ol>
  * <li>{@link #interactItemWithTank(FluidInsertable, FluidExtractable, Reference, LimitedConsumer, FluidFilter, FluidAmount)
- * interactItemWithTank(...)}: which is the base method for interacting anything with a tank (and doesn't do anything
- * special)</li>
- * <li>{@link #interactWithTank(FluidInsertable, FluidExtractable, PlayerEntity, Reference, FluidFilter, FluidAmount)
- * interactWithTank(...)}: Which uses interactItemWithTank internally, but adds excess items to the player's inventory
- * as well as playing a sound.</li>
- * <li>{@link #interactHandWithTank(FluidInsertable, FluidExtractable, PlayerEntity, Hand, FluidFilter, FluidAmount)
- * interactHandWithTank(...)}: Which uses interactWithTank internally, and interacts with the player's current held
- * item. (This is the first method that doesn't require the caller to create a {@link Reference} themselves).</li>
- * <li>{@link #interactCursorWithTank(FluidInsertable, FluidExtractable, ServerPlayerEntity, FluidFilter, FluidAmount)
- * interactCursorWithTank(...)}: Which uses interactWithTank internally, and interacts with the player's cursor stack
- * (what the player has while they have a {@link HandledScreen} open). (This is the second method that doesn't require
- * the caller to create a {@link Reference} themselves).</li>
+ * interactItemWithTank(...)}: which is the base method for interacting anything
+ * with a tank (and doesn't do anything special)</li>
+ * <li>{@link #interactWithTank(FluidInsertable, FluidExtractable, Player, Reference, FluidFilter, FluidAmount)
+ * interactWithTank(...)}: Which uses interactItemWithTank internally, but adds
+ * excess items to the player's inventory as well as playing a sound.</li>
+ * <li>{@link #interactHandWithTank(FluidInsertable, FluidExtractable, Player, Hand, FluidFilter, FluidAmount)
+ * interactHandWithTank(...)}: Which uses interactWithTank internally, and
+ * interacts with the player's current held item. (This is the first method that
+ * doesn't require the caller to create a {@link Reference} themselves).</li>
+ * <li>{@link #interactCursorWithTank(FluidInsertable, FluidExtractable, ServerPlayer, FluidFilter, FluidAmount)
+ * interactCursorWithTank(...)}: Which uses interactWithTank internally, and
+ * interacts with the player's cursor stack (what the player has while they have
+ * a {@link HandledScreen} open). (This is the second method that doesn't
+ * require the caller to create a {@link Reference} themselves).</li>
  * </ol>
  */
 public final class FluidInvUtil {
-    private FluidInvUtil() {}
+    private FluidInvUtil() {
+    }
 
-    private static final Consumer<ItemStack> ITEM_VOID = item -> {
+    private static final Consumer<ItemInstance> ITEM_VOID = item -> {
         // Drop the stack
     };
 
     /*
      * What follows is just 4 methods, with 12 variants fully multiplied out.
      *
-     * If a future maintainer needs to modify these methods, or invalidate
-     * some of the javadoc then I would recommend either updating *everything*
-     * or removing all javadoc except for 4 methods that take all of the args
-     * (but leaving the "@see" sections to the main method).
+     * If a future maintainer needs to modify these methods, or invalidate some of
+     * the javadoc then I would recommend either updating *everything* or removing
+     * all javadoc except for 4 methods that take all of the args (but leaving the
+     * "@see" sections to the main method).
      */
 
     // ###########################
     // interactHandWithTank
     // ###########################
-    // inv = (FixedFluidInv) | (FluidTransferable) | (FluidInsertable+FluidExtractable)
+    // inv = (FixedFluidInv) | (FluidTransferable) |
+    // (FluidInsertable+FluidExtractable)
     // ref = (Reference<ItemStack>)
-    // player = (PlayerEntity)
+    // player = (Player)
     // hand = (Hand)
     // filter = () | (FluidFilter)
     // maximum = () | (FluidAmount)
@@ -91,13 +89,17 @@ public final class FluidInvUtil {
     // FixedFluidInv
     // #############
 
-    /** This is the "interactHandWithTank" variant that takes a single {@link FixedFluidInv} and doesn't limit what
-     * fluid is moved, or how much fluid is moved.
+    /**
+     * This is the "interactHandWithTank" variant that takes a single
+     * {@link FixedFluidInv} and doesn't limit what fluid is moved, or how much
+     * fluid is moved.
      * <p>
-     * Attempts to either fill the inventory from the player's {@link PlayerEntity#getStackInHand(Hand) hand}, or drain
-     * the inventory to the hand. Internally this uses
+     * Attempts to either fill the inventory from the player's
+     * {@link Player#getStackInHand(Hand) hand}, or drain the inventory to the
+     * hand. Internally this uses
      * ({@link FluidAttributes#INSERTABLE}/{@link FluidAttributes#EXTRACTABLE}).{@link CombinableAttribute#get(Reference, LimitedConsumer)
-     * get}(stack, excessStacks) to get the {@link FluidExtractable}/{@link FluidInsertable} from the item to extract
+     * get}(stack, excessStacks) to get the
+     * {@link FluidExtractable}/{@link FluidInsertable} from the item to extract
      * from or insert to.
      * <p>
      * Unlike
@@ -105,35 +107,43 @@ public final class FluidInvUtil {
      * this will:
      * <ul>
      * <li>Play a sound for filling/draining either a bottle or a bucket.</li>
-     * <li>Add excess items directly to the player's inventory (or voids them if the player is in creative mode)</li>
-     * <li>If the player is in creative mode then the cursor stack won't be modified.</li>
+     * <li>Add excess items directly to the player's inventory (or voids them if the
+     * player is in creative mode)</li>
+     * <li>If the player is in creative mode then the cursor stack won't be
+     * modified.</li>
      * </ul>
      * 
      * @param inv The fluid inventory to interact with (referred to as "the tank").
-     * @return A {@link FluidTankInteraction} with some information about what happened:
+     * @return A {@link FluidTankInteraction} with some information about what
+     *         happened:
      *         <ul>
-     *         <li>{@link FluidTankInteraction#fluidMoved} for a copy of the fluid moved.</li>
-     *         <li>{@link FluidTankInteraction#intoTank} will be true if fluid was extracted from the item and inserted
-     *         into the tank, and false otherwise.</li>
-     *         <li>{@link FluidTankInteraction#intoTankStatus} will have the status of the item's
-     *         {@link FluidExtractable}.</li>
-     *         <li>{@link FluidTankInteraction#fromTankStatus} will have the status of the item's
-     *         {@link FluidInsertable}.</li>
+     *         <li>{@link FluidTankInteraction#fluidMoved} for a copy of the fluid
+     *         moved.</li>
+     *         <li>{@link FluidTankInteraction#intoTank} will be true if fluid was
+     *         extracted from the item and inserted into the tank, and false
+     *         otherwise.</li>
+     *         <li>{@link FluidTankInteraction#intoTankStatus} will have the status
+     *         of the item's {@link FluidExtractable}.</li>
+     *         <li>{@link FluidTankInteraction#fromTankStatus} will have the status
+     *         of the item's {@link FluidInsertable}.</li>
      *         </ul>
-     *         The method {@link FluidTankInteraction#didMoveAny()} is recommended for checking to see if anything was
-     *         moved.
+     *         The method {@link FluidTankInteraction#didMoveAny()} is recommended
+     *         for checking to see if anything was moved.
      *         <p>
-     *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
-     *         {@link ActionResult}, suitable for normal block or item "use" methods.
-     * @see #interactHandWithTank(FluidInsertable, FluidExtractable, PlayerEntity, Hand, FluidFilter, FluidAmount) */
-    public static FluidTankInteraction interactHandWithTank(FixedFluidInv inv, PlayerEntity player, Hand hand) {
-        return interactHandWithTank(inv, player, hand, null, null);
+     *         The method {@link FluidTankInteraction#asActionResult()} is
+     *         recommended for converting the result into an {@link ActionResult},
+     *         suitable for normal block or item "use" methods.
+     * @see #interactHandWithTank(FluidInsertable, FluidExtractable, Player,
+     *      Hand, FluidFilter, FluidAmount)
+     */
+    public static FluidTankInteraction interactHandWithTank(FixedFluidInv inv, Player player) {
+        return interactHandWithTank(inv, player, null, null);
     }
 
     /** This is the "interactHandWithTank" variant that takes a single {@link FixedFluidInv} and doesn't limit what
      * fluid is moved.
      * <p>
-     * Attempts to either fill the inventory from the player's {@link PlayerEntity#getStackInHand(Hand) hand}, or drain
+     * Attempts to either fill the inventory from the player's {@link Player#getStackInHand(Hand) hand}, or drain
      * the inventory to the hand. Internally this uses
      * ({@link FluidAttributes#INSERTABLE}/{@link FluidAttributes#EXTRACTABLE}).{@link CombinableAttribute#get(Reference, LimitedConsumer)
      * get}(stack, excessStacks) to get the {@link FluidExtractable}/{@link FluidInsertable} from the item to extract
@@ -165,17 +175,17 @@ public final class FluidInvUtil {
      *         <p>
      *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
      *         {@link ActionResult}, suitable for normal block or item "use" methods.
-     * @see #interactHandWithTank(FluidInsertable, FluidExtractable, PlayerEntity, Hand, FluidFilter, FluidAmount) */
+     * @see #interactHandWithTank(FluidInsertable, FluidExtractable, Player, Hand, FluidFilter, FluidAmount) */
     public static FluidTankInteraction interactHandWithTank(
-        FixedFluidInv inv, PlayerEntity player, Hand hand, FluidAmount maximum
+        FixedFluidInv inv, Player player, FluidAmount maximum
     ) {
-        return interactHandWithTank(inv, player, hand, null, maximum);
+        return interactHandWithTank(inv, player, null, maximum);
     }
 
     /** This is the "interactHandWithTank" variant that takes a single {@link FixedFluidInv} and doesn't limit the
      * maximum amount of fluid moved.
      * <p>
-     * Attempts to either fill the inventory from the player's {@link PlayerEntity#getStackInHand(Hand) hand}, or drain
+     * Attempts to either fill the inventory from the player's {@link Player#getStackInHand(Hand) hand}, or drain
      * the inventory to the hand. Internally this uses
      * ({@link FluidAttributes#INSERTABLE}/{@link FluidAttributes#EXTRACTABLE}).{@link CombinableAttribute#get(Reference, LimitedConsumer)
      * get}(stack, excessStacks) to get the {@link FluidExtractable}/{@link FluidInsertable} from the item to extract
@@ -207,16 +217,16 @@ public final class FluidInvUtil {
      *         <p>
      *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
      *         {@link ActionResult}, suitable for normal block or item "use" methods.
-     * @see #interactHandWithTank(FluidInsertable, FluidExtractable, PlayerEntity, Hand, FluidFilter, FluidAmount) */
+     * @see #interactHandWithTank(FluidInsertable, FluidExtractable, Player, Hand, FluidFilter, FluidAmount) */
     public static FluidTankInteraction interactHandWithTank(
-        FixedFluidInv inv, PlayerEntity player, Hand hand, FluidFilter filter
+        FixedFluidInv inv, Player player, FluidFilter filter
     ) {
-        return interactHandWithTank(inv, player, hand, filter, null);
+        return interactHandWithTank(inv, player, filter, null);
     }
 
     /** This is the "interactHandWithTank" variant that takes a single {@link FixedFluidInv}.
      * <p>
-     * Attempts to either fill the inventory from the player's {@link PlayerEntity#getStackInHand(Hand) hand}, or drain
+     * Attempts to either fill the inventory from the player's {@link Player#getStackInHand(Hand) hand}, or drain
      * the inventory to the hand. Internally this uses
      * ({@link FluidAttributes#INSERTABLE}/{@link FluidAttributes#EXTRACTABLE}).{@link CombinableAttribute#get(Reference, LimitedConsumer)
      * get}(stack, excessStacks) to get the {@link FluidExtractable}/{@link FluidInsertable} from the item to extract
@@ -249,11 +259,11 @@ public final class FluidInvUtil {
      *         <p>
      *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
      *         {@link ActionResult}, suitable for normal block or item "use" methods.
-     * @see #interactHandWithTank(FluidInsertable, FluidExtractable, PlayerEntity, Hand, FluidFilter, FluidAmount) */
+     * @see #interactHandWithTank(FluidInsertable, FluidExtractable, Player, Hand, FluidFilter, FluidAmount) */
     public static FluidTankInteraction interactHandWithTank(
-        FixedFluidInv inv, PlayerEntity player, Hand hand, FluidFilter filter, FluidAmount maximum
+        FixedFluidInv inv, Player player, FluidFilter filter, FluidAmount maximum
     ) {
-        return interactHandWithTank(inv.getTransferable(), player, hand, filter, maximum);
+        return interactHandWithTank(inv.getTransferable(), player, filter, maximum);
     }
 
     // #################
@@ -263,7 +273,7 @@ public final class FluidInvUtil {
     /** This is the "interactHandWithTank" variant that takes a single {@link FluidTransferable} and doesn't limit what
      * fluid is moved, or how much fluid is moved.
      * <p>
-     * Attempts to either fill the transferable from the player's {@link PlayerEntity#getStackInHand(Hand) hand}, or
+     * Attempts to either fill the transferable from the player's {@link Player#getStackInHand(Hand) hand}, or
      * drain the transferable to the hand. Internally this uses
      * ({@link FluidAttributes#INSERTABLE}/{@link FluidAttributes#EXTRACTABLE}).{@link CombinableAttribute#get(Reference, LimitedConsumer)
      * get}(stack, excessStacks) to get the {@link FluidExtractable}/{@link FluidInsertable} from the item to extract
@@ -294,15 +304,15 @@ public final class FluidInvUtil {
      *         <p>
      *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
      *         {@link ActionResult}, suitable for normal block or item "use" methods.
-     * @see #interactHandWithTank(FluidInsertable, FluidExtractable, PlayerEntity, Hand, FluidFilter, FluidAmount) */
-    public static FluidTankInteraction interactHandWithTank(FluidTransferable inv, PlayerEntity player, Hand hand) {
-        return interactHandWithTank(inv, inv, player, hand, null, null);
+     * @see #interactHandWithTank(FluidInsertable, FluidExtractable, Player, Hand, FluidFilter, FluidAmount) */
+    public static FluidTankInteraction interactHandWithTank(FluidTransferable inv, Player player) {
+        return interactHandWithTank(inv, inv, player, null, null);
     }
 
     /** This is the "interactHandWithTank" variant that takes a single {@link FluidTransferable} and doesn't limit what
      * fluid is moved.
      * <p>
-     * Attempts to either fill the transferable from the player's {@link PlayerEntity#getStackInHand(Hand) hand}, or
+     * Attempts to either fill the transferable from the player's {@link Player#getStackInHand(Hand) hand}, or
      * drain the transferable to the hand. Internally this uses
      * ({@link FluidAttributes#INSERTABLE}/{@link FluidAttributes#EXTRACTABLE}).{@link CombinableAttribute#get(Reference, LimitedConsumer)
      * get}(stack, excessStacks) to get the {@link FluidExtractable}/{@link FluidInsertable} from the item to extract
@@ -334,17 +344,17 @@ public final class FluidInvUtil {
      *         <p>
      *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
      *         {@link ActionResult}, suitable for normal block or item "use" methods.
-     * @see #interactHandWithTank(FluidInsertable, FluidExtractable, PlayerEntity, Hand, FluidFilter, FluidAmount) */
+     * @see #interactHandWithTank(FluidInsertable, FluidExtractable, Player, Hand, FluidFilter, FluidAmount) */
     public static FluidTankInteraction interactHandWithTank(
-        FluidTransferable inv, PlayerEntity player, Hand hand, FluidAmount maximum
+        FluidTransferable inv, Player player, FluidAmount maximum
     ) {
-        return interactHandWithTank(inv, inv, player, hand, null, maximum);
+        return interactHandWithTank(inv, inv, player, null, maximum);
     }
 
     /** This is the "interactHandWithTank" variant that takes a single {@link FluidTransferable} and doesn't limit the
      * maximum amount of fluid moved.
      * <p>
-     * Attempts to either fill the transferable from the player's {@link PlayerEntity#getStackInHand(Hand) hand}, or
+     * Attempts to either fill the transferable from the player's {@link Player#getStackInHand(Hand) hand}, or
      * drain the transferable to the hand. Internally this uses
      * ({@link FluidAttributes#INSERTABLE}/{@link FluidAttributes#EXTRACTABLE}).{@link CombinableAttribute#get(Reference, LimitedConsumer)
      * get}(stack, excessStacks) to get the {@link FluidExtractable}/{@link FluidInsertable} from the item to extract
@@ -376,16 +386,16 @@ public final class FluidInvUtil {
      *         <p>
      *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
      *         {@link ActionResult}, suitable for normal block or item "use" methods.
-     * @see #interactHandWithTank(FluidInsertable, FluidExtractable, PlayerEntity, Hand, FluidFilter, FluidAmount) */
+     * @see #interactHandWithTank(FluidInsertable, FluidExtractable, Player, Hand, FluidFilter, FluidAmount) */
     public static FluidTankInteraction interactHandWithTank(
-        FluidTransferable inv, PlayerEntity player, Hand hand, FluidFilter filter
+        FluidTransferable inv, Player player, FluidFilter filter
     ) {
-        return interactHandWithTank(inv, inv, player, hand, filter, null);
+        return interactHandWithTank(inv, inv, player, filter, null);
     }
 
     /** This is the "interactHandWithTank" variant that takes a single {@link FluidTransferable}.
      * <p>
-     * Attempts to either fill the transferable from the player's {@link PlayerEntity#getStackInHand(Hand) hand}, or
+     * Attempts to either fill the transferable from the player's {@link Player#getStackInHand(Hand) hand}, or
      * drain the transferable to the hand. Internally this uses
      * ({@link FluidAttributes#INSERTABLE}/{@link FluidAttributes#EXTRACTABLE}).{@link CombinableAttribute#get(Reference, LimitedConsumer)
      * get}(stack, excessStacks) to get the {@link FluidExtractable}/{@link FluidInsertable} from the item to extract
@@ -418,11 +428,11 @@ public final class FluidInvUtil {
      *         <p>
      *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
      *         {@link ActionResult}, suitable for normal block or item "use" methods.
-     * @see #interactHandWithTank(FluidInsertable, FluidExtractable, PlayerEntity, Hand, FluidFilter, FluidAmount) */
+     * @see #interactHandWithTank(FluidInsertable, FluidExtractable, Player, Hand, FluidFilter, FluidAmount) */
     public static FluidTankInteraction interactHandWithTank(
-        FluidTransferable inv, PlayerEntity player, Hand hand, FluidFilter filter, FluidAmount maximum
+        FluidTransferable inv, Player player, FluidFilter filter, FluidAmount maximum
     ) {
-        return interactHandWithTank(inv, inv, player, hand, filter, maximum);
+        return interactHandWithTank(inv, inv, player, filter, maximum);
     }
 
     // ##################
@@ -432,7 +442,7 @@ public final class FluidInvUtil {
 
     /** This is the "interactHandWithTank" variant that doesn't limit what fluid is moved, or how much fluid is moved.
      * <p>
-     * Attempts to either fill the insertable from the player's {@link PlayerEntity#getStackInHand(Hand) hand}, or drain
+     * Attempts to either fill the insertable from the player's {@link Player#getStackInHand(Hand) hand}, or drain
      * the extractable to the hand. Internally this uses
      * ({@link FluidAttributes#INSERTABLE}/{@link FluidAttributes#EXTRACTABLE}).{@link CombinableAttribute#get(Reference, LimitedConsumer)
      * get}(stack, excessStacks) to get the {@link FluidExtractable}/{@link FluidInsertable} from the item to extract
@@ -468,16 +478,16 @@ public final class FluidInvUtil {
      *         <p>
      *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
      *         {@link ActionResult}, suitable for normal block or item "use" methods.
-     * @see #interactHandWithTank(FluidInsertable, FluidExtractable, PlayerEntity, Hand, FluidFilter, FluidAmount) */
+     * @see #interactHandWithTank(FluidInsertable, FluidExtractable, Player, Hand, FluidFilter, FluidAmount) */
     public static FluidTankInteraction interactHandWithTank(
-        @Nullable FluidInsertable invInsert, @Nullable FluidExtractable invExtract, PlayerEntity player, Hand hand
+        @Nullable FluidInsertable invInsert, @Nullable FluidExtractable invExtract, Player player
     ) {
-        return interactHandWithTank(invInsert, invExtract, player, hand, null, null);
+        return interactHandWithTank(invInsert, invExtract, player, null, null);
     }
 
     /** This is the "interactHandWithTank" variant that doesn't limit what fluid is moved.
      * <p>
-     * Attempts to either fill the insertable from the player's {@link PlayerEntity#getStackInHand(Hand) hand}, or drain
+     * Attempts to either fill the insertable from the player's {@link Player#getStackInHand(Hand) hand}, or drain
      * the extractable to the hand. Internally this uses
      * ({@link FluidAttributes#INSERTABLE}/{@link FluidAttributes#EXTRACTABLE}).{@link CombinableAttribute#get(Reference, LimitedConsumer)
      * get}(stack, excessStacks) to get the {@link FluidExtractable}/{@link FluidInsertable} from the item to extract
@@ -514,17 +524,17 @@ public final class FluidInvUtil {
      *         <p>
      *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
      *         {@link ActionResult}, suitable for normal block or item "use" methods.
-     * @see #interactHandWithTank(FluidInsertable, FluidExtractable, PlayerEntity, Hand, FluidFilter, FluidAmount) */
+     * @see #interactHandWithTank(FluidInsertable, FluidExtractable, Player, Hand, FluidFilter, FluidAmount) */
     public static FluidTankInteraction interactHandWithTank(
-        @Nullable FluidInsertable invInsert, @Nullable FluidExtractable invExtract, PlayerEntity player, Hand hand,
+        @Nullable FluidInsertable invInsert, @Nullable FluidExtractable invExtract, Player player,
         FluidAmount maximum
     ) {
-        return interactHandWithTank(invInsert, invExtract, player, hand, null, maximum);
+        return interactHandWithTank(invInsert, invExtract, player, null, maximum);
     }
 
     /** This is the "interactHandWithTank" variant that doesn't limit the maximum amount of fluid moved.
      * <p>
-     * Attempts to either fill the insertable from the player's {@link PlayerEntity#getStackInHand(Hand) hand}, or drain
+     * Attempts to either fill the insertable from the player's {@link Player#getStackInHand(Hand) hand}, or drain
      * the extractable to the hand. Internally this uses
      * ({@link FluidAttributes#INSERTABLE}/{@link FluidAttributes#EXTRACTABLE}).{@link CombinableAttribute#get(Reference, LimitedConsumer)
      * get}(stack, excessStacks) to get the {@link FluidExtractable}/{@link FluidInsertable} from the item to extract
@@ -561,15 +571,15 @@ public final class FluidInvUtil {
      *         <p>
      *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
      *         {@link ActionResult}, suitable for normal block or item "use" methods.
-     * @see #interactHandWithTank(FluidInsertable, FluidExtractable, PlayerEntity, Hand, FluidFilter, FluidAmount) */
+     * @see #interactHandWithTank(FluidInsertable, FluidExtractable, Player, Hand, FluidFilter, FluidAmount) */
     public static FluidTankInteraction interactHandWithTank(
-        @Nullable FluidInsertable invInsert, @Nullable FluidExtractable invExtract, PlayerEntity player, Hand hand,
+        @Nullable FluidInsertable invInsert, @Nullable FluidExtractable invExtract, Player player,
         FluidFilter filter
     ) {
-        return interactHandWithTank(invInsert, invExtract, player, hand, filter, null);
+        return interactHandWithTank(invInsert, invExtract, player, filter, null);
     }
 
-    /** Attempts to either fill the insertable from the player's {@link PlayerEntity#getStackInHand(Hand) hand}, or
+    /** Attempts to either fill the insertable from the player's {@link Player#getStackInHand(Hand) hand}, or
      * drain the extractable to the hand. Internally this uses
      * ({@link FluidAttributes#INSERTABLE}/{@link FluidAttributes#EXTRACTABLE}).{@link CombinableAttribute#get(Reference, LimitedConsumer)
      * get}(stack, excessStacks) to get the {@link FluidExtractable}/{@link FluidInsertable} from the item to extract
@@ -608,10 +618,10 @@ public final class FluidInvUtil {
      *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
      *         {@link ActionResult}, suitable for normal block or item "use" methods. */
     public static FluidTankInteraction interactHandWithTank(
-        @Nullable FluidInsertable invInsert, @Nullable FluidExtractable invExtract, PlayerEntity player, Hand hand,
+        @Nullable FluidInsertable invInsert, @Nullable FluidExtractable invExtract, Player player,
         FluidFilter filter, FluidAmount maximum
     ) {
-        Reference<ItemStack> stack = PlayerInvUtil.referenceHand(player, hand);
+        Reference<ItemInstance> stack = PlayerInvUtil.referenceHand(player);
         return interactWithTank(invInsert, invExtract, player, stack, filter, maximum);
     }
 
@@ -619,7 +629,7 @@ public final class FluidInvUtil {
     // interactCursorWithTank
     // ###########################
     // inv = (FixedFluidInv) | (FluidTransferable) | (FluidInsertable+FluidExtractable)
-    // player = (ServerPlayerEntity)
+    // player = (ServerPlayer)
     // filter = () | (FluidFilter)
     // maximum = () | (FluidAmount)
     // ###########################
@@ -662,7 +672,7 @@ public final class FluidInvUtil {
      *         <p>
      *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
      *         {@link ActionResult}, suitable for normal block or item "use" methods. */
-    public static FluidTankInteraction interactCursorWithTank(FixedFluidInv inv, ServerPlayerEntity player) {
+    public static FluidTankInteraction interactCursorWithTank(FixedFluidInv inv, ServerPlayer player) {
         return interactCursorWithTank(inv, player, null, null);
     }
 
@@ -702,7 +712,7 @@ public final class FluidInvUtil {
      *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
      *         {@link ActionResult}, suitable for normal block or item "use" methods. */
     public static FluidTankInteraction interactCursorWithTank(
-        FixedFluidInv inv, ServerPlayerEntity player, FluidAmount maximum
+        FixedFluidInv inv, ServerPlayer player, FluidAmount maximum
     ) {
         return interactCursorWithTank(inv, player, null, maximum);
     }
@@ -742,9 +752,9 @@ public final class FluidInvUtil {
      *         <p>
      *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
      *         {@link ActionResult}, suitable for normal block or item "use" methods.
-     * @see #interactCursorWithTank(FluidInsertable, FluidExtractable, ServerPlayerEntity, FluidFilter, FluidAmount) */
+     * @see #interactCursorWithTank(FluidInsertable, FluidExtractable, ServerPlayer, FluidFilter, FluidAmount) */
     public static FluidTankInteraction interactCursorWithTank(
-        FixedFluidInv inv, ServerPlayerEntity player, FluidFilter filter
+        FixedFluidInv inv, ServerPlayer player, FluidFilter filter
     ) {
         return interactCursorWithTank(inv, player, filter, null);
     }
@@ -784,9 +794,9 @@ public final class FluidInvUtil {
      *         <p>
      *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
      *         {@link ActionResult}, suitable for normal block or item "use" methods.
-     * @see #interactCursorWithTank(FluidInsertable, FluidExtractable, ServerPlayerEntity, FluidFilter, FluidAmount) */
+     * @see #interactCursorWithTank(FluidInsertable, FluidExtractable, ServerPlayer, FluidFilter, FluidAmount) */
     public static FluidTankInteraction interactCursorWithTank(
-        FixedFluidInv inv, ServerPlayerEntity player, FluidFilter filter, FluidAmount maximum
+        FixedFluidInv inv, ServerPlayer player, FluidFilter filter, FluidAmount maximum
     ) {
         return interactCursorWithTank(inv.getTransferable(), player, filter, maximum);
     }
@@ -829,7 +839,7 @@ public final class FluidInvUtil {
      *         <p>
      *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
      *         {@link ActionResult}, suitable for normal block or item "use" methods. */
-    public static FluidTankInteraction interactCursorWithTank(FluidTransferable inv, ServerPlayerEntity player) {
+    public static FluidTankInteraction interactCursorWithTank(FluidTransferable inv, ServerPlayer player) {
         return interactCursorWithTank(inv, inv, player, null, null);
     }
 
@@ -869,7 +879,7 @@ public final class FluidInvUtil {
      *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
      *         {@link ActionResult}, suitable for normal block or item "use" methods. */
     public static FluidTankInteraction interactCursorWithTank(
-        FluidTransferable inv, ServerPlayerEntity player, FluidAmount maximum
+        FluidTransferable inv, ServerPlayer player, FluidAmount maximum
     ) {
         return interactCursorWithTank(inv, inv, player, null, maximum);
     }
@@ -909,9 +919,9 @@ public final class FluidInvUtil {
      *         <p>
      *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
      *         {@link ActionResult}, suitable for normal block or item "use" methods.
-     * @see #interactCursorWithTank(FluidInsertable, FluidExtractable, ServerPlayerEntity, FluidFilter, FluidAmount) */
+     * @see #interactCursorWithTank(FluidInsertable, FluidExtractable, ServerPlayer, FluidFilter, FluidAmount) */
     public static FluidTankInteraction interactCursorWithTank(
-        FluidTransferable inv, ServerPlayerEntity player, FluidFilter filter
+        FluidTransferable inv, ServerPlayer player, FluidFilter filter
     ) {
         return interactCursorWithTank(inv, inv, player, filter, null);
     }
@@ -951,9 +961,9 @@ public final class FluidInvUtil {
      *         <p>
      *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
      *         {@link ActionResult}, suitable for normal block or item "use" methods.
-     * @see #interactCursorWithTank(FluidInsertable, FluidExtractable, ServerPlayerEntity, FluidFilter, FluidAmount) */
+     * @see #interactCursorWithTank(FluidInsertable, FluidExtractable, ServerPlayer, FluidFilter, FluidAmount) */
     public static FluidTankInteraction interactCursorWithTank(
-        FluidTransferable inv, ServerPlayerEntity player, FluidFilter filter, FluidAmount maximum
+        FluidTransferable inv, ServerPlayer player, FluidFilter filter, FluidAmount maximum
     ) {
         return interactCursorWithTank(inv, inv, player, filter, maximum);
     }
@@ -1002,7 +1012,7 @@ public final class FluidInvUtil {
      *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
      *         {@link ActionResult}, suitable for normal block or item "use" methods. */
     public static FluidTankInteraction interactCursorWithTank(
-        @Nullable FluidInsertable invInsert, @Nullable FluidExtractable invExtract, ServerPlayerEntity player
+        @Nullable FluidInsertable invInsert, @Nullable FluidExtractable invExtract, ServerPlayer player
     ) {
         return interactCursorWithTank(invInsert, invExtract, player, null, null);
     }
@@ -1047,7 +1057,7 @@ public final class FluidInvUtil {
      *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
      *         {@link ActionResult}, suitable for normal block or item "use" methods. */
     public static FluidTankInteraction interactCursorWithTank(
-        @Nullable FluidInsertable invInsert, @Nullable FluidExtractable invExtract, ServerPlayerEntity player,
+        @Nullable FluidInsertable invInsert, @Nullable FluidExtractable invExtract, ServerPlayer player,
         FluidAmount maximum
     ) {
         return interactCursorWithTank(invInsert, invExtract, player, null, maximum);
@@ -1092,9 +1102,9 @@ public final class FluidInvUtil {
      *         <p>
      *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
      *         {@link ActionResult}, suitable for normal block or item "use" methods.
-     * @see #interactCursorWithTank(FluidInsertable, FluidExtractable, ServerPlayerEntity, FluidFilter, FluidAmount) */
+     * @see #interactCursorWithTank(FluidInsertable, FluidExtractable, ServerPlayer, FluidFilter, FluidAmount) */
     public static FluidTankInteraction interactCursorWithTank(
-        @Nullable FluidInsertable invInsert, @Nullable FluidExtractable invExtract, ServerPlayerEntity player,
+        @Nullable FluidInsertable invInsert, @Nullable FluidExtractable invExtract, ServerPlayer player,
         FluidFilter filter
     ) {
         return interactCursorWithTank(invInsert, invExtract, player, filter, null);
@@ -1139,10 +1149,10 @@ public final class FluidInvUtil {
      *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
      *         {@link ActionResult}, suitable for normal block or item "use" methods. */
     public static FluidTankInteraction interactCursorWithTank(
-        @Nullable FluidInsertable invInsert, @Nullable FluidExtractable invExtract, ServerPlayerEntity player,
+        @Nullable FluidInsertable invInsert, @Nullable FluidExtractable invExtract, ServerPlayer player,
         FluidFilter filter, FluidAmount maximum
     ) {
-        Reference<ItemStack> stack = PlayerInvUtil.referenceGuiCursor(player);
+        Reference<ItemInstance> stack = PlayerInvUtil.referenceGuiCursor(player);
         return interactWithTank(invInsert, invExtract, player, stack, filter, maximum);
     }
 
@@ -1152,7 +1162,7 @@ public final class FluidInvUtil {
     // inv = (FixedFluidInv) | (FluidTransferable) | (FluidInsertable+FluidExtractable)
     // ref = (Reference<ItemStack>)
     // excess = (LimitedConsumer)
-    // player = (PlayerEntity)
+    // player = (Player)
     // filter = () | (FluidFilter)
     // maximum = () | (FluidAmount)
     // ###########################
@@ -1197,9 +1207,9 @@ public final class FluidInvUtil {
      *         <p>
      *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
      *         {@link ActionResult}, suitable for normal block or item "use" methods.
-     * @see #interactWithTank(FluidInsertable, FluidExtractable, PlayerEntity, Reference, FluidFilter, FluidAmount) */
+     * @see #interactWithTank(FluidInsertable, FluidExtractable, Player, Reference, FluidFilter, FluidAmount) */
     public static FluidTankInteraction interactWithTank(
-        FixedFluidInv inv, PlayerEntity player, Reference<ItemStack> stack
+        FixedFluidInv inv, Player player, Reference<ItemInstance> stack
     ) {
         return interactWithTank(inv, player, stack, null, null);
     }
@@ -1241,9 +1251,9 @@ public final class FluidInvUtil {
      *         <p>
      *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
      *         {@link ActionResult}, suitable for normal block or item "use" methods.
-     * @see #interactWithTank(FluidInsertable, FluidExtractable, PlayerEntity, Reference, FluidFilter, FluidAmount) */
+     * @see #interactWithTank(FluidInsertable, FluidExtractable, Player, Reference, FluidFilter, FluidAmount) */
     public static FluidTankInteraction interactWithTank(
-        FixedFluidInv inv, PlayerEntity player, Reference<ItemStack> stack, FluidAmount maximum
+        FixedFluidInv inv, Player player, Reference<ItemInstance> stack, FluidAmount maximum
     ) {
         return interactWithTank(inv, player, stack, null, maximum);
     }
@@ -1285,9 +1295,9 @@ public final class FluidInvUtil {
      *         <p>
      *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
      *         {@link ActionResult}, suitable for normal block or item "use" methods.
-     * @see #interactWithTank(FluidInsertable, FluidExtractable, PlayerEntity, Reference, FluidFilter, FluidAmount) */
+     * @see #interactWithTank(FluidInsertable, FluidExtractable, Player, Reference, FluidFilter, FluidAmount) */
     public static FluidTankInteraction interactWithTank(
-        FixedFluidInv inv, PlayerEntity player, Reference<ItemStack> stack, FluidFilter filter
+        FixedFluidInv inv, Player player, Reference<ItemInstance> stack, FluidFilter filter
     ) {
         return interactWithTank(inv, player, stack, filter, null);
     }
@@ -1329,9 +1339,9 @@ public final class FluidInvUtil {
      *         <p>
      *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
      *         {@link ActionResult}, suitable for normal block or item "use" methods.
-     * @see #interactWithTank(FluidInsertable, FluidExtractable, PlayerEntity, Reference, FluidFilter, FluidAmount) */
+     * @see #interactWithTank(FluidInsertable, FluidExtractable, Player, Reference, FluidFilter, FluidAmount) */
     public static FluidTankInteraction interactWithTank(
-        FixedFluidInv inv, PlayerEntity player, Reference<ItemStack> stack, FluidFilter filter, FluidAmount maximum
+        FixedFluidInv inv, Player player, Reference<ItemInstance> stack, FluidFilter filter, FluidAmount maximum
     ) {
         return interactWithTank(inv.getTransferable(), player, stack, filter, maximum);
     }
@@ -1376,9 +1386,9 @@ public final class FluidInvUtil {
      *         <p>
      *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
      *         {@link ActionResult}, suitable for normal block or item "use" methods.
-     * @see #interactWithTank(FluidInsertable, FluidExtractable, PlayerEntity, Reference, FluidFilter, FluidAmount) */
+     * @see #interactWithTank(FluidInsertable, FluidExtractable, Player, Reference, FluidFilter, FluidAmount) */
     public static FluidTankInteraction interactWithTank(
-        FluidTransferable inv, PlayerEntity player, Reference<ItemStack> stack
+        FluidTransferable inv, Player player, Reference<ItemInstance> stack
     ) {
         return interactWithTank(inv, inv, player, stack, null, null);
     }
@@ -1420,9 +1430,9 @@ public final class FluidInvUtil {
      *         <p>
      *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
      *         {@link ActionResult}, suitable for normal block or item "use" methods.
-     * @see #interactWithTank(FluidInsertable, FluidExtractable, PlayerEntity, Reference, FluidFilter, FluidAmount) */
+     * @see #interactWithTank(FluidInsertable, FluidExtractable, Player, Reference, FluidFilter, FluidAmount) */
     public static FluidTankInteraction interactWithTank(
-        FluidTransferable inv, PlayerEntity player, Reference<ItemStack> stack, FluidAmount maximum
+        FluidTransferable inv, Player player, Reference<ItemInstance> stack, FluidAmount maximum
     ) {
         return interactWithTank(inv, inv, player, stack, null, maximum);
     }
@@ -1464,9 +1474,9 @@ public final class FluidInvUtil {
      *         <p>
      *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
      *         {@link ActionResult}, suitable for normal block or item "use" methods.
-     * @see #interactWithTank(FluidInsertable, FluidExtractable, PlayerEntity, Reference, FluidFilter, FluidAmount) */
+     * @see #interactWithTank(FluidInsertable, FluidExtractable, Player, Reference, FluidFilter, FluidAmount) */
     public static FluidTankInteraction interactWithTank(
-        FluidTransferable inv, PlayerEntity player, Reference<ItemStack> stack, FluidFilter filter
+        FluidTransferable inv, Player player, Reference<ItemInstance> stack, FluidFilter filter
     ) {
         return interactWithTank(inv, inv, player, stack, filter, null);
     }
@@ -1508,9 +1518,9 @@ public final class FluidInvUtil {
      *         <p>
      *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
      *         {@link ActionResult}, suitable for normal block or item "use" methods.
-     * @see #interactWithTank(FluidInsertable, FluidExtractable, PlayerEntity, Reference, FluidFilter, FluidAmount) */
+     * @see #interactWithTank(FluidInsertable, FluidExtractable, Player, Reference, FluidFilter, FluidAmount) */
     public static FluidTankInteraction interactWithTank(
-        FluidTransferable inv, PlayerEntity player, Reference<ItemStack> stack, FluidFilter filter, FluidAmount maximum
+        FluidTransferable inv, Player player, Reference<ItemInstance> stack, FluidFilter filter, FluidAmount maximum
     ) {
         return interactWithTank(inv, inv, player, stack, filter, maximum);
     }
@@ -1560,10 +1570,10 @@ public final class FluidInvUtil {
      *         <p>
      *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
      *         {@link ActionResult}, suitable for normal block or item "use" methods.
-     * @see #interactWithTank(FluidInsertable, FluidExtractable, PlayerEntity, Reference, FluidFilter, FluidAmount) */
+     * @see #interactWithTank(FluidInsertable, FluidExtractable, Player, Reference, FluidFilter, FluidAmount) */
     public static FluidTankInteraction interactWithTank(
-        @Nullable FluidInsertable invInsert, @Nullable FluidExtractable invExtract, PlayerEntity player,
-        Reference<ItemStack> stack
+        @Nullable FluidInsertable invInsert, @Nullable FluidExtractable invExtract, Player player,
+        Reference<ItemInstance> stack
     ) {
         return interactWithTank(invInsert, invExtract, player, stack, null, null);
     }
@@ -1609,10 +1619,10 @@ public final class FluidInvUtil {
      *         <p>
      *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
      *         {@link ActionResult}, suitable for normal block or item "use" methods.
-     * @see #interactWithTank(FluidInsertable, FluidExtractable, PlayerEntity, Reference, FluidFilter, FluidAmount) */
+     * @see #interactWithTank(FluidInsertable, FluidExtractable, Player, Reference, FluidFilter, FluidAmount) */
     public static FluidTankInteraction interactWithTank(
-        @Nullable FluidInsertable invInsert, @Nullable FluidExtractable invExtract, PlayerEntity player,
-        Reference<ItemStack> stack, FluidFilter filter
+        @Nullable FluidInsertable invInsert, @Nullable FluidExtractable invExtract, Player player,
+        Reference<ItemInstance> stack, FluidFilter filter
     ) {
         return interactWithTank(invInsert, invExtract, player, stack, filter, null);
     }
@@ -1658,10 +1668,10 @@ public final class FluidInvUtil {
      *         <p>
      *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
      *         {@link ActionResult}, suitable for normal block or item "use" methods.
-     * @see #interactWithTank(FluidInsertable, FluidExtractable, PlayerEntity, Reference, FluidFilter, FluidAmount) */
+     * @see #interactWithTank(FluidInsertable, FluidExtractable, Player, Reference, FluidFilter, FluidAmount) */
     public static FluidTankInteraction interactWithTank(
-        @Nullable FluidInsertable invInsert, @Nullable FluidExtractable invExtract, PlayerEntity player,
-        Reference<ItemStack> stack, FluidAmount maximum
+        @Nullable FluidInsertable invInsert, @Nullable FluidExtractable invExtract, Player player,
+        Reference<ItemInstance> stack, FluidAmount maximum
     ) {
         return interactWithTank(invInsert, invExtract, player, stack, null, maximum);
     }
@@ -1707,37 +1717,39 @@ public final class FluidInvUtil {
      *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
      *         {@link ActionResult}, suitable for normal block or item "use" methods. */
     public static FluidTankInteraction interactWithTank(
-        @Nullable FluidInsertable invInsert, @Nullable FluidExtractable invExtract, PlayerEntity player,
-        Reference<ItemStack> stack, FluidFilter filter, FluidAmount maximum
+        @Nullable FluidInsertable invInsert, @Nullable FluidExtractable invExtract, Player player,
+        Reference<ItemInstance> stack, FluidFilter filter, FluidAmount maximum
     ) {
-        ItemStack mainStack = stack.get();
-        if (mainStack.isEmpty()) {
+        ItemInstance mainStack = stack.get();
+        if (mainStack == null || mainStack.count == 0) {
             return FluidTankInteraction.NONE;
         }
-        boolean isCreative = player.abilities.creativeMode;
-        Reference<ItemStack> realRef = stack;
-        if (isCreative) {
-            realRef = Reference.callable(stack::get, ITEM_VOID, s -> true);
-        }
-        Consumer<ItemStack> stackConsumer = isCreative ? ITEM_VOID : PlayerInvUtil.createPlayerInsertable(player);
-        LimitedConsumer<ItemStack> excess = LimitedConsumer.fromConsumer(stackConsumer);
+        // boolean isCreative = false; //Creative Mode Doesn't Exist
+        Reference<ItemInstance> realRef = stack;
+        // if (isCreative) {
+        //     realRef = Reference.callable(stack::get, ITEM_VOID, s -> true);
+        // }
+        // Consumer<ItemInstance> stackConsumer = isCreative ? ITEM_VOID : PlayerInvUtil.createPlayerInsertable(player);
+        Consumer<ItemInstance> stackConsumer = PlayerInvUtil.createPlayerInsertable(player);
+        LimitedConsumer<ItemInstance> excess = LimitedConsumer.fromConsumer(stackConsumer);
         FluidTankInteraction result = interactItemWithTank(invInsert, invExtract, realRef, excess, filter, maximum);
         if (!result.didMoveAny()) {
             return result;
         }
-        final SoundEvent soundEvent;
-        if (result.fluidMoved.fluidKey == FluidKeys.LAVA) {
-            soundEvent = result.intoTank ? SoundEvents.ITEM_BUCKET_EMPTY_LAVA : SoundEvents.ITEM_BUCKET_FILL_LAVA;
-        } else {
-            Item item = mainStack.getItem();
-            boolean isBottle = item instanceof GlassBottleItem || item instanceof PotionItem;
-            if (isBottle) {
-                soundEvent = result.intoTank ? SoundEvents.ITEM_BOTTLE_EMPTY : SoundEvents.ITEM_BOTTLE_FILL;
-            } else {
-                soundEvent = result.intoTank ? SoundEvents.ITEM_BUCKET_EMPTY : SoundEvents.ITEM_BUCKET_FILL;
-            }
-        }
-        player.playSound(soundEvent, SoundCategory.BLOCKS, 1.0f, 1.0f);
+        //todo sound
+        // final SoundEvent soundEvent;
+        // if (result.fluidMoved.fluidKey == FluidKeys.LAVA) {
+        //     soundEvent = result.intoTank ? SoundEvents.ITEM_BUCKET_EMPTY_LAVA : SoundEvents.ITEM_BUCKET_FILL_LAVA;
+        // } else {
+        //     Item item = mainStack.getItem();
+        //     boolean isBottle = item instanceof GlassBottleItem || item instanceof PotionItem;
+        //     if (isBottle) {
+        //         soundEvent = result.intoTank ? SoundEvents.ITEM_BOTTLE_EMPTY : SoundEvents.ITEM_BOTTLE_FILL;
+        //     } else {
+        //         soundEvent = result.intoTank ? SoundEvents.ITEM_BUCKET_EMPTY : SoundEvents.ITEM_BUCKET_FILL;
+        //     }
+        // }
+        // player.playSound(soundEvent, SoundCategory.BLOCKS, 1.0f, 1.0f);
         return result;
     }
 
@@ -1795,7 +1807,7 @@ public final class FluidInvUtil {
      * @see #interactItemWithTank(FluidInsertable, FluidExtractable, Reference, LimitedConsumer, FluidFilter,
      *      FluidAmount) */
     public static FluidTankInteraction interactItemWithTank(
-        FixedFluidInv inv, Reference<ItemStack> stack, LimitedConsumer<ItemStack> excessStacks
+        FixedFluidInv inv, Reference<ItemInstance> stack, LimitedConsumer<ItemInstance> excessStacks
     ) {
         return interactItemWithTank(inv, stack, excessStacks, null, null);
     }
@@ -1841,7 +1853,7 @@ public final class FluidInvUtil {
      * @see #interactItemWithTank(FluidInsertable, FluidExtractable, Reference, LimitedConsumer, FluidFilter,
      *      FluidAmount) */
     public static FluidTankInteraction interactItemWithTank(
-        FixedFluidInv inv, Reference<ItemStack> stack, LimitedConsumer<ItemStack> excessStacks, FluidFilter filter
+        FixedFluidInv inv, Reference<ItemInstance> stack, LimitedConsumer<ItemInstance> excessStacks, FluidFilter filter
     ) {
         return interactItemWithTank(inv, stack, excessStacks, filter, null);
     }
@@ -1887,7 +1899,7 @@ public final class FluidInvUtil {
      * @see #interactItemWithTank(FluidInsertable, FluidExtractable, Reference, LimitedConsumer, FluidFilter,
      *      FluidAmount) */
     public static FluidTankInteraction interactItemWithTank(
-        FixedFluidInv inv, Reference<ItemStack> stack, LimitedConsumer<ItemStack> excessStacks, FluidAmount maximum
+        FixedFluidInv inv, Reference<ItemInstance> stack, LimitedConsumer<ItemInstance> excessStacks, FluidAmount maximum
     ) {
         return interactItemWithTank(inv, stack, excessStacks, null, maximum);
     }
@@ -1934,7 +1946,7 @@ public final class FluidInvUtil {
      * @see #interactItemWithTank(FluidInsertable, FluidExtractable, Reference, LimitedConsumer, FluidFilter,
      *      FluidAmount) */
     public static FluidTankInteraction interactItemWithTank(
-        FixedFluidInv inv, Reference<ItemStack> stack, LimitedConsumer<ItemStack> excessStacks, FluidFilter filter,
+        FixedFluidInv inv, Reference<ItemInstance> stack, LimitedConsumer<ItemInstance> excessStacks, FluidFilter filter,
         FluidAmount maximum
     ) {
         return interactItemWithTank(inv.getTransferable(), stack, excessStacks, filter, maximum);
@@ -1984,7 +1996,7 @@ public final class FluidInvUtil {
      * @see #interactItemWithTank(FluidInsertable, FluidExtractable, Reference, LimitedConsumer, FluidFilter,
      *      FluidAmount) */
     public static FluidTankInteraction interactItemWithTank(
-        FluidTransferable inv, Reference<ItemStack> stack, LimitedConsumer<ItemStack> excessStacks
+        FluidTransferable inv, Reference<ItemInstance> stack, LimitedConsumer<ItemInstance> excessStacks
     ) {
         return interactItemWithTank(inv, inv, stack, excessStacks, null, null);
     }
@@ -2030,7 +2042,7 @@ public final class FluidInvUtil {
      * @see #interactItemWithTank(FluidInsertable, FluidExtractable, Reference, LimitedConsumer, FluidFilter,
      *      FluidAmount) */
     public static FluidTankInteraction interactItemWithTank(
-        FluidTransferable inv, Reference<ItemStack> stack, LimitedConsumer<ItemStack> excessStacks, FluidFilter filter
+        FluidTransferable inv, Reference<ItemInstance> stack, LimitedConsumer<ItemInstance> excessStacks, FluidFilter filter
     ) {
         return interactItemWithTank(inv, inv, stack, excessStacks, filter, null);
     }
@@ -2076,7 +2088,7 @@ public final class FluidInvUtil {
      * @see #interactItemWithTank(FluidInsertable, FluidExtractable, Reference, LimitedConsumer, FluidFilter,
      *      FluidAmount) */
     public static FluidTankInteraction interactItemWithTank(
-        FluidTransferable inv, Reference<ItemStack> stack, LimitedConsumer<ItemStack> excessStacks, FluidAmount maximum
+        FluidTransferable inv, Reference<ItemInstance> stack, LimitedConsumer<ItemInstance> excessStacks, FluidAmount maximum
     ) {
         return interactItemWithTank(inv, inv, stack, excessStacks, null, maximum);
     }
@@ -2123,7 +2135,7 @@ public final class FluidInvUtil {
      * @see #interactItemWithTank(FluidInsertable, FluidExtractable, Reference, LimitedConsumer, FluidFilter,
      *      FluidAmount) */
     public static FluidTankInteraction interactItemWithTank(
-        FluidTransferable inv, Reference<ItemStack> stack, LimitedConsumer<ItemStack> excessStacks, FluidFilter filter,
+        FluidTransferable inv, Reference<ItemInstance> stack, LimitedConsumer<ItemInstance> excessStacks, FluidFilter filter,
         FluidAmount maximum
     ) {
         return interactItemWithTank(inv, inv, stack, excessStacks, filter, maximum);
@@ -2179,8 +2191,8 @@ public final class FluidInvUtil {
      * @see #interactItemWithTank(FluidInsertable, FluidExtractable, Reference, LimitedConsumer, FluidFilter,
      *      FluidAmount) */
     public static FluidTankInteraction interactItemWithTank(
-        @Nullable FluidInsertable invInsert, @Nullable FluidExtractable invExtract, Reference<ItemStack> stack,
-        LimitedConsumer<ItemStack> excessStacks
+        @Nullable FluidInsertable invInsert, @Nullable FluidExtractable invExtract, Reference<ItemInstance> stack,
+        LimitedConsumer<ItemInstance> excessStacks
     ) {
         return interactItemWithTank(invInsert, invExtract, stack, excessStacks, null, null);
     }
@@ -2230,8 +2242,8 @@ public final class FluidInvUtil {
      * @see #interactItemWithTank(FluidInsertable, FluidExtractable, Reference, LimitedConsumer, FluidFilter,
      *      FluidAmount) */
     public static FluidTankInteraction interactItemWithTank(
-        @Nullable FluidInsertable invInsert, @Nullable FluidExtractable invExtract, Reference<ItemStack> stack,
-        LimitedConsumer<ItemStack> excessStacks, FluidFilter filter
+        @Nullable FluidInsertable invInsert, @Nullable FluidExtractable invExtract, Reference<ItemInstance> stack,
+        LimitedConsumer<ItemInstance> excessStacks, FluidFilter filter
     ) {
         return interactItemWithTank(invInsert, invExtract, stack, excessStacks, filter, null);
     }
@@ -2281,8 +2293,8 @@ public final class FluidInvUtil {
      * @see #interactItemWithTank(FluidInsertable, FluidExtractable, Reference, LimitedConsumer, FluidFilter,
      *      FluidAmount) */
     public static FluidTankInteraction interactItemWithTank(
-        @Nullable FluidInsertable invInsert, @Nullable FluidExtractable invExtract, Reference<ItemStack> stack,
-        LimitedConsumer<ItemStack> excessStacks, FluidAmount maximum
+        @Nullable FluidInsertable invInsert, @Nullable FluidExtractable invExtract, Reference<ItemInstance> stack,
+        LimitedConsumer<ItemInstance> excessStacks, FluidAmount maximum
     ) {
         return interactItemWithTank(invInsert, invExtract, stack, excessStacks, null, maximum);
     }
@@ -2333,8 +2345,8 @@ public final class FluidInvUtil {
      *         The method {@link FluidTankInteraction#asActionResult()} is recommended for converting the result into an
      *         {@link ActionResult}, suitable for normal block or item "use" methods. */
     public static FluidTankInteraction interactItemWithTank(
-        @Nullable FluidInsertable invInsert, @Nullable FluidExtractable invExtract, Reference<ItemStack> stack,
-        LimitedConsumer<ItemStack> excessStacks, FluidFilter filter, FluidAmount maximum
+        @Nullable FluidInsertable invInsert, @Nullable FluidExtractable invExtract, Reference<ItemInstance> stack,
+        LimitedConsumer<ItemInstance> excessStacks, FluidFilter filter, FluidAmount maximum
     ) {
         // Even though neither FluidFilter nor FluidAmount are specified as @Nullable
         // they should still accept nulls to make calling them simpler

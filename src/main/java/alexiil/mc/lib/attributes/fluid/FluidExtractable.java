@@ -10,8 +10,6 @@ package alexiil.mc.lib.attributes.fluid;
 import java.lang.reflect.Method;
 import java.math.RoundingMode;
 
-import net.minecraft.item.ItemStack;
-
 import alexiil.mc.lib.attributes.AttributeUtil;
 import alexiil.mc.lib.attributes.Simulation;
 import alexiil.mc.lib.attributes.fluid.amount.FluidAmount;

@@ -12,8 +12,6 @@ import java.math.RoundingMode;
 import java.util.Collections;
 import java.util.Set;
 
-import net.minecraft.item.ItemStack;
-
 import alexiil.mc.lib.attributes.AttributeUtil;
 import alexiil.mc.lib.attributes.ListenerRemovalToken;
 import alexiil.mc.lib.attributes.ListenerToken;

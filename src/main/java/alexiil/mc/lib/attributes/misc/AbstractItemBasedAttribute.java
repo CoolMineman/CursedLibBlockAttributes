@@ -7,18 +7,17 @@
  */
 package alexiil.mc.lib.attributes.misc;
 
-import net.minecraft.item.ItemStack;
-
 import alexiil.mc.lib.attributes.Simulation;
+import net.minecraft.item.ItemInstance;
 
 /** Skeleton class for use when exposing an attribute (like a fluid inventory) from an item that is contained in a
  * reference. */
 public abstract class AbstractItemBasedAttribute {
 
-    protected final Reference<ItemStack> stackRef;
-    protected final LimitedConsumer<ItemStack> excessStacks;
+    protected final Reference<ItemInstance> stackRef;
+    protected final LimitedConsumer<ItemInstance> excessStacks;
 
-    protected AbstractItemBasedAttribute(Reference<ItemStack> stackRef, LimitedConsumer<ItemStack> excessStacks) {
+    protected AbstractItemBasedAttribute(Reference<ItemInstance> stackRef, LimitedConsumer<ItemInstance> excessStacks) {
         this.stackRef = stackRef;
         this.excessStacks = excessStacks;
     }
@@ -27,8 +26,8 @@ public abstract class AbstractItemBasedAttribute {
      * 
      * @param oldStack A copied stack from {@link #stackRef}, but decreased by 1.
      * @param newStack The modified stack that was split off from {@link #stackRef}. */
-    protected boolean setStacks(Simulation simulation, ItemStack oldStack, ItemStack newStack) {
-        if (oldStack.isEmpty() && stackRef.set(newStack, simulation)) {
+    protected boolean setStacks(Simulation simulation, ItemInstance oldStack, ItemInstance newStack) {
+        if (oldStack != null && stackRef.set(newStack, simulation)) {
             return true;
         } else if (stackRef.isValid(oldStack) && excessStacks.offer(newStack, simulation)) {
             boolean did = stackRef.set(oldStack, simulation);

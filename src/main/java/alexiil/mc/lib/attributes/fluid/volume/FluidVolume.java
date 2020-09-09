@@ -29,7 +29,7 @@ import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.fluid.EmptyFluid;
 import net.minecraft.fluid.FlowableFluid;
-import net.minecraft.fluid.Fluid;
+import net.minecraft.tile.Fluid;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.PacketByteBuf;

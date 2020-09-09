@@ -36,7 +36,7 @@ public class LibBlockAttributes {
             this.id = id;
         }
 
-        public Id id(String path) {
+        public Id moduleId(String path) {
             return new Id(id, path);
         }
 

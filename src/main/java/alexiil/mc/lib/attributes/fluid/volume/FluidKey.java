@@ -27,6 +27,7 @@ import net.minecraft.fluid.EmptyFluid;
 import net.minecraft.fluid.FlowableFluid;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.Fluids;
+import net.minecraft.level.Level;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.text.LiteralText;
@@ -838,7 +839,7 @@ public abstract class FluidKey {
     }
 
     /** Called when this is pumped out from the world. */
-    public FluidVolume fromWorld(WorldView world, BlockPos pos) {
+    public FluidVolume fromWorld(Level world, BlockPos pos) {
         return withAmount(FluidAmount.BUCKET);
     }
 

@@ -10,7 +10,6 @@ package alexiil.mc.lib.attributes;
 import java.util.function.Predicate;
 
 import concern.VoxelShape;
-import concern.VoxelShapes;
 
 /** The base class for block search options. This only contains filtration for objects that are added to the attribute
  * list via a {@link Predicate}. Instances can be constructed/obtained from {@link SearchOptions}, and all javadoc for
@@ -39,6 +38,7 @@ public class SearchOption<T> {
     /** Returns the {@link VoxelShape} to use for bounds checking. This defaults to a full block, but custom search
      * options (like {@link SearchOptionInVoxel}) override this. */
     public VoxelShape getShape() {
-        return VoxelShapes.fullCube();
+        //return VoxelShapes.fullCube();
+        return null;
     }
 }

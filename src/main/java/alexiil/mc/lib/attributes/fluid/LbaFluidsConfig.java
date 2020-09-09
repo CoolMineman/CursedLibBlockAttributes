@@ -47,11 +47,11 @@ public final class LbaFluidsConfig {
     static {
         FabricLoader fabric = FabricLoader.getInstance();
         final Path cfgDir;
-        if (fabric.getGameDir() == null) {
+        if (fabric.getGameDirectory() == null) {
             // Can happen during a JUnit test
             cfgDir = Paths.get("config");
         } else {
-            cfgDir = fabric.getGameDir();
+            cfgDir = fabric.getGameDirectory().toPath();
         }
         if (!Files.isDirectory(cfgDir)) {
             try {

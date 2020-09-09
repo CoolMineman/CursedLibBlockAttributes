@@ -7,8 +7,7 @@
  */
 package alexiil.mc.lib.attributes.fluid;
 
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemInstance;
 
 import alexiil.mc.lib.attributes.CombinableAttribute;
 import alexiil.mc.lib.attributes.fluid.volume.FluidVolume;
@@ -28,7 +27,7 @@ public interface FluidProviderItem {
      *             {@link CombinableAttribute#get(alexiil.mc.lib.attributes.misc.Reference) get}(stack).
      *             {@link FluidExtractable#extract(int) extract(maximumAmount)} */
     @Deprecated
-    FluidVolume drain(Ref<ItemStack> stack);
+    FluidVolume drain(Ref<ItemInstance> stack);
 
     /** Attempts to fill the given stack with the given fluid.
      * 
@@ -41,5 +40,5 @@ public interface FluidProviderItem {
      *             {@link CombinableAttribute#get(alexiil.mc.lib.attributes.misc.Reference) get}(stack).
      *             {@link FluidInsertable#insert(FluidVolume) insert}(with) */
     @Deprecated
-    boolean fill(Ref<ItemStack> stack, Ref<FluidVolume> with);
+    boolean fill(Ref<ItemInstance> stack, Ref<FluidVolume> with);
 }

@@ -12,8 +12,6 @@ import java.util.function.Function;
 
 import javax.annotation.Nullable;
 
-import net.minecraft.item.ItemStack;
-
 import alexiil.mc.lib.attributes.Simulation;
 import alexiil.mc.lib.attributes.fluid.FluidVolumeUtil.FluidTransferResult;
 import alexiil.mc.lib.attributes.fluid.amount.FluidAmount;

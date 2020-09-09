@@ -19,13 +19,8 @@ import javax.annotation.Nonnull;
 
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
-
-import net.minecraft.block.Block;
-import net.minecraft.item.BucketItem;
-import net.minecraft.item.FishBucketItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-
+import net.minecraft.item.ItemInstance;
+import net.minecraft.item.ItemType;
 import alexiil.mc.lib.attributes.Attribute;
 import alexiil.mc.lib.attributes.AttributeCombiner;
 import alexiil.mc.lib.attributes.AttributeSourceType;
@@ -57,6 +52,7 @@ import alexiil.mc.lib.attributes.fluid.volume.FluidKeys;
 import alexiil.mc.lib.attributes.fluid.volume.FluidVolume;
 import alexiil.mc.lib.attributes.misc.AbstractItemBasedAttribute;
 import alexiil.mc.lib.attributes.misc.LibBlockAttributes.LbaModule;
+import io.github.minecraftcursedlegacy.api.registry.Registries;
 import alexiil.mc.lib.attributes.misc.LimitedConsumer;
 import alexiil.mc.lib.attributes.misc.Reference;
 
@@ -148,14 +144,14 @@ public final class FluidAttributes {
         return attribute;
     }
 
-    private static boolean isValidBucket(ItemStack stack) {
-        return isValidBucket(stack.getItem());
+    private static boolean isValidBucket(ItemInstance stack) {
+        return isValidBucket(Registries.ITEM_TYPE.getBySerialisedId(stack.itemId));
     }
 
-    private static boolean isValidBucket(Item item) {
-        if (item instanceof FishBucketItem) {
-            return false;
-        }
+    private static boolean isValidBucket(ItemType item) {
+        // if (item instanceof FishBucketItem) {
+        //     return false;
+        // }
         return item instanceof IBucketItem && ((IBucketItem) item).libblockattributes__shouldExposeFluid();
     }
 
@@ -163,17 +159,17 @@ public final class FluidAttributes {
      * the attributes. */
     static final class BucketItemGroupedFluidInv extends AbstractItemBasedAttribute implements GroupedFluidInv {
 
-        BucketItemGroupedFluidInv(Reference<ItemStack> stackRef, LimitedConsumer<ItemStack> excessStacks) {
+        BucketItemGroupedFluidInv(Reference<ItemInstance> stackRef, LimitedConsumer<ItemInstance> excessStacks) {
             super(stackRef, excessStacks);
         }
 
         @Override
         public Set<FluidKey> getStoredFluids() {
-            ItemStack stack = stackRef.get();
+            ItemInstance stack = stackRef.get();
             if (!isValidBucket(stack)) {
                 return Collections.emptySet();
             }
-            IBucketItem bucket = (IBucketItem) stack.getItem();
+            IBucketItem bucket = (IBucketItem) Registries.ITEM_TYPE.getBySerialisedId(stack.itemId);
             FluidKey fluid = bucket.libblockattributes__getFluid(stack);
             if (fluid == FluidKeys.EMPTY) {
                 return Collections.emptySet();
@@ -183,29 +179,29 @@ public final class FluidAttributes {
 
         @Override
         public FluidAmount getTotalCapacity_F() {
-            ItemStack stack = stackRef.get();
+            ItemInstance stack = stackRef.get();
             if (!isValidBucket(stack)) {
                 return FluidAmount.ZERO;
             }
-            IBucketItem bucket = (IBucketItem) stack.getItem();
+            IBucketItem bucket = (IBucketItem) Registries.ITEM_TYPE.getBySerialisedId(stack.itemId);
             FluidAmount perBucket = bucket.libblockattributes__getFluidVolumeAmount();
-            return perBucket.checkedMul(stack.getCount());
+            return perBucket.checkedMul(stack.count);
         }
 
         @Override
         public FluidInvStatistic getStatistics(FluidFilter filter) {
-            ItemStack stack = stackRef.get();
+            ItemInstance stack = stackRef.get();
             if (!isValidBucket(stack)) {
                 return FluidInvStatistic.emptyOf(filter);
             }
 
-            IBucketItem bucket = (IBucketItem) stack.getItem();
+            IBucketItem bucket = (IBucketItem) Registries.ITEM_TYPE.getBySerialisedId(stack.itemId);
             FluidKey current = bucket.libblockattributes__getFluid(stack);
 
             if (current != FluidKeys.EMPTY) {
                 if (filter.matches(current)) {
                     FluidAmount perBucket = bucket.libblockattributes__getFluidVolumeAmount();
-                    FluidAmount amount = perBucket.checkedMul(stack.getCount());
+                    FluidAmount amount = perBucket.checkedMul(stack.count);
                     return new FluidInvStatistic(filter, amount, FluidAmount.ZERO, amount);
                 } else {
                     return FluidInvStatistic.emptyOf(filter);
@@ -216,9 +212,9 @@ public final class FluidAttributes {
 
             if (any != null) {
                 FluidAmount perBucket = bucket.libblockattributes__getFluidVolumeAmount();
-                FluidAmount space = perBucket.checkedMul(stack.getCount());
+                FluidAmount space = perBucket.checkedMul(stack.count);
                 for (FluidKey key : any) {
-                    if (!bucket.libblockattributes__withFluid(key).isEmpty()) {
+                    if (bucket.libblockattributes__withFluid(key) != null) {
                         return new FluidInvStatistic(filter, FluidAmount.ZERO, FluidAmount.ZERO, space);
                     }
                 }
@@ -234,11 +230,11 @@ public final class FluidAttributes {
 
         @Override
         public FluidVolume attemptInsertion(FluidVolume fluid, Simulation simulation) {
-            ItemStack stack = stackRef.get();
+            ItemInstance stack = stackRef.get();
             if (!isValidBucket(stack)) {
                 return fluid;
             }
-            IBucketItem bucket = (IBucketItem) stack.getItem();
+            IBucketItem bucket = (IBucketItem) Registries.ITEM_TYPE.getBySerialisedId(stack.itemId);
             FluidAmount perBucket = bucket.libblockattributes__getFluidVolumeAmount();
             if (fluid.getAmount_F().isLessThan(perBucket)) {
                 return fluid;
@@ -247,13 +243,13 @@ public final class FluidAttributes {
             if (!current.isEmpty()) {
                 return fluid;
             }
-            ItemStack newStack = bucket.libblockattributes__withFluid(fluid.fluidKey);
-            if (newStack.isEmpty()) {
+            ItemInstance newStack = bucket.libblockattributes__withFluid(fluid.fluidKey);
+            if (newStack == null || newStack.count == 0){
                 return fluid;
             }
 
             stack = stack.copy();
-            stack.decrement(1);
+            stack.count -= 1;
 
             FluidVolume originalFluid = fluid;
             fluid = fluid.copy();
@@ -272,11 +268,11 @@ public final class FluidAttributes {
 
         @Override
         public FluidVolume attemptExtraction(FluidFilter filter, FluidAmount maxAmount, Simulation simulation) {
-            ItemStack stack = stackRef.get();
+            ItemInstance stack = stackRef.get();
             if (!isValidBucket(stack)) {
                 return FluidVolumeUtil.EMPTY;
             }
-            IBucketItem bucket = (IBucketItem) stack.getItem();
+            IBucketItem bucket = (IBucketItem) Registries.ITEM_TYPE.getBySerialisedId(stack.itemId);
             FluidAmount perBucket = bucket.libblockattributes__getFluidVolumeAmount();
             if (maxAmount.isLessThan(perBucket)) {
                 return FluidVolumeUtil.EMPTY;
@@ -286,10 +282,10 @@ public final class FluidAttributes {
                 return FluidVolumeUtil.EMPTY;
             }
 
-            ItemStack newStack = bucket.libblockattributes__drainedOfFluid(stack);
+            ItemInstance newStack = bucket.libblockattributes__drainedOfFluid(stack);
 
             stack = stack.copy();
-            stack.decrement(1);
+            stack.count -= 1;
 
             if (setStacks(simulation, stack, newStack)) {
                 return current.withAmount(perBucket);

@@ -12,12 +12,6 @@ import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-
 import alexiil.mc.lib.attributes.Simulation;
 import alexiil.mc.lib.attributes.fluid.amount.FluidAmount;
 import alexiil.mc.lib.attributes.fluid.filter.AggregateFluidFilter;
@@ -29,76 +23,99 @@ import alexiil.mc.lib.attributes.fluid.volume.FluidVolume;
 import alexiil.mc.lib.attributes.misc.LimitedConsumer;
 import alexiil.mc.lib.attributes.misc.Ref;
 import alexiil.mc.lib.attributes.misc.Reference;
+import io.github.minecraftcursedlegacy.api.event.ActionResult;
+import net.minecraft.entity.player.Player;
+import net.minecraft.entity.player.ServerPlayer;
+import net.minecraft.item.ItemInstance;
 
 public final class FluidVolumeUtil {
-    private FluidVolumeUtil() {}
+    private FluidVolumeUtil() {
+    }
 
     public static final FluidVolume EMPTY = FluidKeys.EMPTY.withAmount(FluidAmount.ZERO);
 
-    /** Attempts to move as much fluid as possible from the {@link FluidExtractable} to the {@link FluidInsertable}.
+    /**
+     * Attempts to move as much fluid as possible from the {@link FluidExtractable}
+     * to the {@link FluidInsertable}.
      * 
      * @return A copy of the fluid moved.
-     * @see #move(FluidExtractable, FluidInsertable, FluidFilter, int) */
+     * @see #move(FluidExtractable, FluidInsertable, FluidFilter, int)
+     */
     public static FluidVolume move(FluidExtractable from, FluidInsertable to) {
         return move(from, to, null, FluidAmount.MAX_BUCKETS);
     }
 
-    /** Attempts to move up to the given amount of fluid from the {@link FluidExtractable} to the
-     * {@link FluidInsertable}.
+    /**
+     * Attempts to move up to the given amount of fluid from the
+     * {@link FluidExtractable} to the {@link FluidInsertable}.
      * 
      * @return A copy of the fluid moved.
      * @see #move(FluidExtractable, FluidInsertable, FluidFilter, int)
-     * @deprecated Replaced by {@link #move(FluidExtractable, FluidInsertable, FluidAmount)} */
+     * @deprecated Replaced by
+     *             {@link #move(FluidExtractable, FluidInsertable, FluidAmount)}
+     */
     @Deprecated
     public static FluidVolume move(FluidExtractable from, FluidInsertable to, int maximum) {
         return move(from, to, null, maximum);
     }
 
-    /** Attempts to move up to the given amount of fluid from the {@link FluidExtractable} to the
-     * {@link FluidInsertable}.
+    /**
+     * Attempts to move up to the given amount of fluid from the
+     * {@link FluidExtractable} to the {@link FluidInsertable}.
      * 
      * @return A copy of the fluid moved.
-     * @see #move(FluidExtractable, FluidInsertable, FluidFilter, int) */
+     * @see #move(FluidExtractable, FluidInsertable, FluidFilter, int)
+     */
     public static FluidVolume move(FluidExtractable from, FluidInsertable to, FluidAmount maximum) {
         return move(from, to, null, maximum);
     }
 
-    /** Attempts to move up to the given maximum amount of fluids from the {@link FluidExtractable} to the
-     * {@link FluidInsertable}, provided they match the given {@link FluidFilter}.
+    /**
+     * Attempts to move up to the given maximum amount of fluids from the
+     * {@link FluidExtractable} to the {@link FluidInsertable}, provided they match
+     * the given {@link FluidFilter}.
      * 
      * @return A copy of the fluid moved.
-     * @deprecated Replaced by {@link #move(FluidExtractable, FluidInsertable, FluidFilter, FluidAmount)} */
+     * @deprecated Replaced by
+     *             {@link #move(FluidExtractable, FluidInsertable, FluidFilter, FluidAmount)}
+     */
     @Deprecated
     public static FluidVolume move(FluidExtractable from, FluidInsertable to, FluidFilter filter, int maximum) {
         return move(from, to, filter, FluidAmount.of1620(maximum));
     }
 
-    /** Attempts to move up to the given maximum amount of fluids from the {@link FluidExtractable} to the
-     * {@link FluidInsertable}, provided they match the given {@link FluidFilter}.
+    /**
+     * Attempts to move up to the given maximum amount of fluids from the
+     * {@link FluidExtractable} to the {@link FluidInsertable}, provided they match
+     * the given {@link FluidFilter}.
      * 
-     * @return A copy of the fluid moved. */
+     * @return A copy of the fluid moved.
+     */
     public static FluidVolume move(FluidExtractable from, FluidInsertable to, FluidFilter filter) {
         return move(from, to, filter, null);
     }
 
-    /** Attempts to move up to the given maximum amount of fluids from the {@link FluidExtractable} to the
-     * {@link FluidInsertable}, provided they match the given {@link FluidFilter}.
+    /**
+     * Attempts to move up to the given maximum amount of fluids from the
+     * {@link FluidExtractable} to the {@link FluidInsertable}, provided they match
+     * the given {@link FluidFilter}.
      * 
-     * @return A copy of the fluid moved. */
-    public static FluidVolume move(
-        FluidExtractable from, FluidInsertable to, @Nullable FluidFilter filter, @Nullable FluidAmount maximum
-    ) {
+     * @return A copy of the fluid moved.
+     */
+    public static FluidVolume move(FluidExtractable from, FluidInsertable to, @Nullable FluidFilter filter,
+            @Nullable FluidAmount maximum) {
         return move(from, to, filter, maximum, Simulation.ACTION);
     }
 
-    /** Attempts to move up to the given maximum amount of fluids from the {@link FluidExtractable} to the
-     * {@link FluidInsertable}, provided they match the given {@link FluidFilter}.
+    /**
+     * Attempts to move up to the given maximum amount of fluids from the
+     * {@link FluidExtractable} to the {@link FluidInsertable}, provided they match
+     * the given {@link FluidFilter}.
      * 
-     * @return A copy of the fluid moved. */
-    public static FluidVolume move(
-        FluidExtractable from, FluidInsertable to, @Nullable FluidFilter filter, @Nullable FluidAmount maximum,
-        Simulation simulation
-    ) {
+     * @return A copy of the fluid moved.
+     */
+    public static FluidVolume move(FluidExtractable from, FluidInsertable to, @Nullable FluidFilter filter,
+            @Nullable FluidAmount maximum, Simulation simulation) {
         FluidFilter insertionFilter = to.getInsertionFilter();
         if (filter != null && filter != ConstantFluidFilter.ANYTHING) {
             insertionFilter = AggregateFluidFilter.and(insertionFilter, filter);
@@ -108,11 +125,14 @@ public final class FluidVolumeUtil {
         }
 
         // 5 steps:
-        // 1: (Simulate) Try to extract as much as possible, to find out the maximum amount of fluid available
+        // 1: (Simulate) Try to extract as much as possible, to find out the maximum
+        // amount of fluid available
         // 2: (Simulate) Try to insert as much of the extracted as possible
         // 3: (Simulate) Try to extract the exact amount that was actually inserted
-        /* We don't need to simulate inserting the exact amount because it should always be safe to insert the amount
-         * minus the result. */
+        /*
+         * We don't need to simulate inserting the exact amount because it should always
+         * be safe to insert the amount minus the result.
+         */
         // If all of the above steps provide an exact amount > 0:
         // 4: Extract the exact amount
         // 5: Insert the exact fluid.
@@ -133,8 +153,7 @@ public final class FluidVolumeUtil {
 
         // Step 3:
         ExactFluidFilter keyFilter = new ExactFluidFilter(extracted.fluidKey);
-        FluidVolume exactExtracted
-            = from.attemptExtraction(keyFilter, firstInserted, Simulation.SIMULATE);
+        FluidVolume exactExtracted = from.attemptExtraction(keyFilter, firstInserted, Simulation.SIMULATE);
         if (!exactExtracted.getAmount_F().equals(firstInserted)) {
             return EMPTY;
         }
@@ -143,10 +162,9 @@ public final class FluidVolumeUtil {
         FluidVolume reallyExtracted = from.attemptExtraction(keyFilter, firstInserted, simulation);
         if (!reallyExtracted.equals(exactExtracted)) {
             throw throwBadImplException(
-                "A simulated extraction (returning A) didn't match the real extraction (returning B) from the fluid extractable C!",
-                new String[] { "fluid A", "fluid B", "from C", "filter D" },
-                new Object[] { exactExtracted, reallyExtracted, from, insertionFilter }
-            );
+                    "A simulated extraction (returning A) didn't match the real extraction (returning B) from the fluid extractable C!",
+                    new String[] { "fluid A", "fluid B", "from C", "filter D" },
+                    new Object[] { exactExtracted, reallyExtracted, from, insertionFilter });
         }
 
         // Step 5:
@@ -156,29 +174,30 @@ public final class FluidVolumeUtil {
         }
 
         throw throwBadImplException(
-            "A simulated insertion (of A returning B) didn't match the real insertion (of C returning D) into the fluid insertable E!",
-            new String[] { "inserted A", "result B", "inserted C", "result D", "insertable E" },
-            new Object[] { extracted, firstLeftover, reallyExtracted, leftover, to }
-        );
+                "A simulated insertion (of A returning B) didn't match the real insertion (of C returning D) into the fluid insertable E!",
+                new String[] { "inserted A", "result B", "inserted C", "result D", "insertable E" },
+                new Object[] { extracted, firstLeftover, reallyExtracted, leftover, to });
     }
 
-    /** @return An {@link FluidInsertable} that will insert fluids into the given stack (overflowing into the given
-     *         {@link Consumer})
-     * @deprecated This has been replaced by the item-based attributes system. */
+    /**
+     * @return An {@link FluidInsertable} that will insert fluids into the given
+     *         stack (overflowing into the given {@link Consumer})
+     * @deprecated This has been replaced by the item-based attributes system.
+     */
     @Deprecated
-    public static FluidInsertable createItemInventoryInsertable(
-        Ref<ItemStack> stackRef, Consumer<ItemStack> excessStacks
-    ) {
+    public static FluidInsertable createItemInventoryInsertable(Ref<ItemInstance> stackRef,
+            Consumer<ItemInstance> excessStacks) {
         return FluidAttributes.INSERTABLE.get(stackRef, LimitedConsumer.fromConsumer(excessStacks));
     }
 
-    /** @return An {@link FluidExtractable} that will extract fluids from the given stack (overflowing into the given
-     *         {@link Consumer})
-     * @deprecated This has been replaced by the item-based attributes system. */
+    /**
+     * @return An {@link FluidExtractable} that will extract fluids from the given
+     *         stack (overflowing into the given {@link Consumer})
+     * @deprecated This has been replaced by the item-based attributes system.
+     */
     @Deprecated
-    public static FluidExtractable createItemInventoryExtractable(
-        Ref<ItemStack> stackRef, Consumer<ItemStack> excessStacks
-    ) {
+    public static FluidExtractable createItemInventoryExtractable(Ref<ItemInstance> stackRef,
+            Consumer<ItemInstance> excessStacks) {
         return FluidAttributes.EXTRACTABLE.get(stackRef, LimitedConsumer.fromConsumer(excessStacks));
     }
 
@@ -186,48 +205,51 @@ public final class FluidVolumeUtil {
     // Various methods moved to FluidInvUtil
     // #####################################
 
-    /** @deprecated The boolean return has been deprecated, and the main method has been moved to
-     *             {@link FluidInvUtil#interactHandWithTank(FixedFluidInv, PlayerEntity, Hand)} */
+    /**
+     * @deprecated The boolean return has been deprecated, and the main method has
+     *             been moved to
+     *             {@link FluidInvUtil#interactHandWithTank(FixedFluidInv, PlayerEntity, Hand)}
+     */
     @Deprecated
-    public static boolean interactWithTank(FixedFluidInv inv, PlayerEntity player, Hand hand) {
-        return FluidInvUtil.interactHandWithTank(inv, player, hand).didMoveAny();
+    public static boolean interactWithTank(FixedFluidInv inv, Player player) {
+        return FluidInvUtil.interactHandWithTank(inv, player).didMoveAny();
     }
 
     /** @deprecated The boolean return has been deprecated, and the main method has been moved to
      *             {@link FluidInvUtil#interactHandWithTank(FluidTransferable, PlayerEntity, Hand)} */
     @Deprecated
-    public static boolean interactWithTank(FluidTransferable inv, PlayerEntity player, Hand hand) {
-        return FluidInvUtil.interactHandWithTank(inv, player, hand).didMoveAny();
+    public static boolean interactWithTank(FluidTransferable inv, Player player) {
+        return FluidInvUtil.interactHandWithTank(inv, player).didMoveAny();
     }
 
     /** @deprecated The boolean return has been deprecated, and the main method has been moved to
      *             {@link FluidInvUtil#interactHandWithTank(FluidInsertable, FluidExtractable, PlayerEntity, Hand)} */
     @Deprecated
     public static boolean interactWithTank(
-        @Nullable FluidInsertable invInsert, @Nullable FluidExtractable invExtract, PlayerEntity player, Hand hand
+        @Nullable FluidInsertable invInsert, @Nullable FluidExtractable invExtract, Player player
     ) {
-        return FluidInvUtil.interactHandWithTank(invInsert, invExtract, player, hand).didMoveAny();
+        return FluidInvUtil.interactHandWithTank(invInsert, invExtract, player).didMoveAny();
     }
 
     /** @deprecated The boolean return has been deprecated, and the main method has been moved to
-     *             {@link FluidInvUtil#interactCursorWithTank(FixedFluidInv, ServerPlayerEntity)} */
+     *             {@link FluidInvUtil#interactCursorWithTank(FixedFluidInv, ServerPlayer)} */
     @Deprecated
-    public static boolean interactCursorWithTank(FixedFluidInv inv, ServerPlayerEntity player) {
+    public static boolean interactCursorWithTank(FixedFluidInv inv, ServerPlayer player) {
         return FluidInvUtil.interactCursorWithTank(inv, player).didMoveAny();
     }
 
     /** @deprecated The boolean return has been deprecated, and the main method has been moved to
-     *             {@link FluidInvUtil#interactCursorWithTank(FluidTransferable, ServerPlayerEntity)} */
+     *             {@link FluidInvUtil#interactCursorWithTank(FluidTransferable, ServerPlayer)} */
     @Deprecated
-    public static boolean interactCursorWithTank(FluidTransferable inv, ServerPlayerEntity player) {
+    public static boolean interactCursorWithTank(FluidTransferable inv, ServerPlayer player) {
         return FluidInvUtil.interactCursorWithTank(inv, player).didMoveAny();
     }
 
     /** @deprecated The boolean return has been deprecated, and the main method has been moved to
-     *             {@link FluidInvUtil#interactCursorWithTank(FluidInsertable, FluidExtractable, ServerPlayerEntity)} */
+     *             {@link FluidInvUtil#interactCursorWithTank(FluidInsertable, FluidExtractable, ServerPlayer)} */
     @Deprecated
     public static boolean interactCursorWithTank(
-        FluidInsertable invInsert, FluidExtractable invExtract, ServerPlayerEntity player
+        FluidInsertable invInsert, FluidExtractable invExtract, ServerPlayer player
     ) {
         return FluidInvUtil.interactCursorWithTank(invInsert, invExtract, player).didMoveAny();
     }
@@ -236,8 +258,8 @@ public final class FluidVolumeUtil {
      *             {@link FluidInvUtil#interactWithTank(FluidInsertable, FluidExtractable, PlayerEntity, Reference)} */
     @Deprecated
     public static boolean interactWithTank(
-        @Nullable FluidInsertable invInsert, @Nullable FluidExtractable invExtract, PlayerEntity player,
-        Reference<ItemStack> mainStackRef
+        @Nullable FluidInsertable invInsert, @Nullable FluidExtractable invExtract, Player player,
+        Reference<ItemInstance> mainStackRef
     ) {
         return FluidInvUtil.interactWithTank(invInsert, invExtract, player, mainStackRef).didMoveAny();
     }
@@ -246,7 +268,7 @@ public final class FluidVolumeUtil {
      *             {@link FluidInvUtil#interactItemWithTank(FixedFluidInv, Reference, LimitedConsumer)}. */
     @Deprecated
     public static FluidTankInteraction interactWithTank(
-        FixedFluidInv inv, Ref<ItemStack> stack, Consumer<ItemStack> excessStacks
+        FixedFluidInv inv, Ref<ItemInstance> stack, Consumer<ItemInstance> excessStacks
     ) {
         return interactWithTank(inv.getInsertable(), inv.getExtractable(), stack, excessStacks);
     }
@@ -255,7 +277,7 @@ public final class FluidVolumeUtil {
      *             {@link FluidInvUtil#interactItemWithTank(FluidTransferable, Reference, LimitedConsumer)}. */
     @Deprecated
     public static FluidTankInteraction interactWithTank(
-        FluidTransferable inv, Ref<ItemStack> stack, Consumer<ItemStack> excessStacks
+        FluidTransferable inv, Ref<ItemInstance> stack, Consumer<ItemInstance> excessStacks
     ) {
         return interactWithTank(inv, inv, stack, excessStacks);
     }
@@ -268,7 +290,7 @@ public final class FluidVolumeUtil {
      *             {@link FluidInvUtil#interactItemWithTank(FluidInsertable, FluidExtractable, Reference, LimitedConsumer)}. */
     @Deprecated
     public static FluidTankInteraction interactWithTank(
-        FluidInsertable invInsert, FluidExtractable invExtract, Ref<ItemStack> stack, Consumer<ItemStack> excessStacks
+        FluidInsertable invInsert, FluidExtractable invExtract, Ref<ItemInstance> stack, Consumer<ItemInstance> excessStacks
     ) {
         return FluidInvUtil
             .interactItemWithTank(invInsert, invExtract, stack, LimitedConsumer.fromConsumer(excessStacks));
@@ -278,7 +300,7 @@ public final class FluidVolumeUtil {
      *             all interactWithTank methods have been moved to {@link FluidInvUtil}. */
     @Deprecated
     public static FluidTankInteraction interactWithTank(
-        FixedFluidInv inv, Reference<ItemStack> stack, LimitedConsumer<ItemStack> excessStacks
+        FixedFluidInv inv, Reference<ItemInstance> stack, LimitedConsumer<ItemInstance> excessStacks
     ) {
         return FluidInvUtil.interactItemWithTank(inv.getInsertable(), inv.getExtractable(), stack, excessStacks);
     }
@@ -287,7 +309,7 @@ public final class FluidVolumeUtil {
      *             instead: all interactWithTank methods have been moved to {@link FluidInvUtil}. */
     @Deprecated
     public static FluidTankInteraction interactWithTank(
-        FluidTransferable inv, Reference<ItemStack> stack, LimitedConsumer<ItemStack> excessStacks
+        FluidTransferable inv, Reference<ItemInstance> stack, LimitedConsumer<ItemInstance> excessStacks
     ) {
         return FluidInvUtil.interactItemWithTank(inv, inv, stack, excessStacks);
     }
@@ -297,8 +319,8 @@ public final class FluidVolumeUtil {
      *             instead: all interactWithTank methods have been moved to {@link FluidInvUtil}. */
     @Deprecated
     public static FluidTankInteraction interactWithTank(
-        FluidInsertable invInsert, FluidExtractable invExtract, Reference<ItemStack> stack,
-        LimitedConsumer<ItemStack> excessStacks
+        FluidInsertable invInsert, FluidExtractable invExtract, Reference<ItemInstance> stack,
+        LimitedConsumer<ItemInstance> excessStacks
     ) {
         return FluidInvUtil.interactItemWithTank(invInsert, invExtract, stack, excessStacks);
     }

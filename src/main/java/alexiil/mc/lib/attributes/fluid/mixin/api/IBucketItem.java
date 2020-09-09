@@ -7,8 +7,9 @@
  */
 package alexiil.mc.lib.attributes.fluid.mixin.api;
 
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemInstance;
+
+import javax.annotation.Nullable;
 
 import alexiil.mc.lib.attributes.fluid.FluidAttributes;
 import alexiil.mc.lib.attributes.fluid.GroupedFluidInv;
@@ -23,16 +24,16 @@ public interface IBucketItem {
 
     boolean libblockattributes__shouldExposeFluid();
 
-    FluidKey libblockattributes__getFluid(ItemStack stack);
+    FluidKey libblockattributes__getFluid(ItemInstance stack);
 
-    /** @return Either the {@link ItemStack} filled with the given fluid, or {@link ItemStack#EMPTY} if the given fluid
+    /** @return Either the {@link ItemStack} filled with the given fluid, or null if the given fluid
      *         is unsupported. */
-    ItemStack libblockattributes__withFluid(FluidKey fluid);
+    @Nullable ItemInstance libblockattributes__withFluid(FluidKey fluid);
 
     /** Similar to {@link #libblockattributes__withFluid(FluidKey)}, but can return an empty stack if this bucket should
      * be roundingLoss when drained by a machine that doesn't have special tooling/mechanisms for keeping the container around.
      * (Unlike withFluid this is assumed to always be a valid result). */
-    default ItemStack libblockattributes__drainedOfFluid(ItemStack stack) {
+    default ItemInstance libblockattributes__drainedOfFluid(ItemInstance stack) {
         // Most containers use the same logic for both
         return libblockattributes__withFluid(FluidKeys.EMPTY);
     }
