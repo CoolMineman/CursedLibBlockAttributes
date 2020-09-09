@@ -18,7 +18,7 @@ import net.minecraft.block.entity.DispenserBlockEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.math.BlockPointerImpl;
-import net.minecraft.util.math.BlockPos;
+import concern.BlockPos;
 
 import alexiil.mc.lib.attributes.item.mixin.HopperHooks;
 

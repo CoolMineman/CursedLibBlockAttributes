@@ -14,8 +14,8 @@ import javax.annotation.Nullable;
 
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
+import concern.BlockPos;
+import concern.Direction;
 import net.minecraft.world.World;
 
 import alexiil.mc.lib.attributes.misc.LimitedConsumer;

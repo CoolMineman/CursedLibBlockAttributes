@@ -12,7 +12,7 @@ import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ItemScatterer;
-import net.minecraft.util.math.BlockPos;
+import concern.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 

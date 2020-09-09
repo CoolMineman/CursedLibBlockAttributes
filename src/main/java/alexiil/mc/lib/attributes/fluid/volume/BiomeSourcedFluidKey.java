@@ -11,7 +11,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.util.math.BlockPos;
+import concern.BlockPos;
 import net.minecraft.world.WorldView;
 import net.minecraft.world.biome.Biome;
 

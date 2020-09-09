@@ -16,11 +16,11 @@ import javax.annotation.Nullable;
 import stolen.DefaultedList;
 import net.minecraft.util.function.BooleanBiFunction;
 import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Direction.AxisDirection;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.util.shape.VoxelShapes;
+import concern.Direction;
+import concern.Direction.AxisDirection;
+import net.minecraft.util.maths.Vec3d;
+import concern.VoxelShape;
+import concern.VoxelShapes;
 
 /** Search result for block attributes. */
 public class AttributeList<T> extends AbstractAttributeList<T> {

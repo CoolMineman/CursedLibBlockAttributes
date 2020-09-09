@@ -11,7 +11,7 @@ import java.util.EnumSet;
 import java.util.List;
 
 import net.minecraft.client.texture.Sprite;
-import net.minecraft.util.math.Direction;
+import concern.Direction;
 import net.minecraft.util.math.MathHelper;
 
 public final class FluidRenderFace {

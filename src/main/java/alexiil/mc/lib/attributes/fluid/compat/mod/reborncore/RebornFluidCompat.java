@@ -12,7 +12,7 @@ import java.util.Collections;
 import java.util.Set;
 
 import net.minecraft.fluid.Fluid;
-import net.minecraft.util.math.Direction;
+import concern.Direction;
 
 import alexiil.mc.lib.attributes.AttributeList;
 import alexiil.mc.lib.attributes.AttributeSourceType;

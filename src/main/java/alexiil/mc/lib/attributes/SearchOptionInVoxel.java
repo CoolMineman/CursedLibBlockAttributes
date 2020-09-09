@@ -9,7 +9,7 @@ package alexiil.mc.lib.attributes;
 
 import java.util.function.Predicate;
 
-import net.minecraft.util.shape.VoxelShape;
+import concern.VoxelShape;
 
 public final class SearchOptionInVoxel<T> extends SearchOption<T> {
     public final VoxelShape shape;

@@ -9,8 +9,8 @@ package alexiil.mc.lib.attributes;
 
 import java.util.function.Predicate;
 
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.util.shape.VoxelShapes;
+import concern.VoxelShape;
+import concern.VoxelShapes;
 
 /** The base class for block search options. This only contains filtration for objects that are added to the attribute
  * list via a {@link Predicate}. Instances can be constructed/obtained from {@link SearchOptions}, and all javadoc for

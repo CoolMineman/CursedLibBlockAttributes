@@ -9,10 +9,10 @@ package alexiil.mc.lib.attributes;
 
 import java.util.function.Predicate;
 
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.util.shape.VoxelShapes;
+import concern.BlockPos;
+import concern.Direction;
+import concern.VoxelShape;
+import concern.VoxelShapes;
 import net.minecraft.world.World;
 
 /** Various methods for creating {@link SearchOption} instances. */

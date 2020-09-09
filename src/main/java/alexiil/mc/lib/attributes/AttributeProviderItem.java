@@ -7,8 +7,7 @@
  */
 package alexiil.mc.lib.attributes;
 
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemInstance;
 
 import alexiil.mc.lib.attributes.misc.LimitedConsumer;
 import alexiil.mc.lib.attributes.misc.Reference;
@@ -23,5 +22,5 @@ public interface AttributeProviderItem {
      *            modifying the stack directly.
      * @param excess If interacting with any of the returned attributes produces excess {@link ItemStack}'s then they
      *            should be added to this {@link LimitedConsumer}. */
-    void addAllAttributes(Reference<ItemStack> stack, LimitedConsumer<ItemStack> excess, ItemAttributeList<?> to);
+    void addAllAttributes(Reference<ItemInstance> stack, LimitedConsumer<ItemInstance> excess, ItemAttributeList<?> to);
 }

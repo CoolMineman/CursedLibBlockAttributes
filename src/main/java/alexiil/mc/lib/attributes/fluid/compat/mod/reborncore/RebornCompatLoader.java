@@ -9,7 +9,7 @@ package alexiil.mc.lib.attributes.fluid.compat.mod.reborncore;
 
 import net.minecraft.fluid.Fluid;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.util.math.Direction;
+import concern.Direction;
 
 import alexiil.mc.lib.attributes.misc.LibBlockAttributes;
 import alexiil.mc.lib.attributes.misc.compat.mod.LbaModCompatLoader;

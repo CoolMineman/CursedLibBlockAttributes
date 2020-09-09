@@ -15,8 +15,8 @@ import net.minecraft.block.entity.Hopper;
 import net.minecraft.block.entity.HopperBlockEntity;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.util.ActionResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
+import concern.BlockPos;
+import concern.Direction;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 

@@ -15,112 +15,131 @@ import javax.annotation.Nullable;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.world.World;
+import net.minecraft.entity.TileEntity;
+import net.minecraft.item.ItemInstance;
+import net.minecraft.item.ItemType;
+import net.minecraft.level.Level;
+import net.minecraft.tile.Tile;
 
 import alexiil.mc.lib.attributes.AdderList.ValueEntry;
 import alexiil.mc.lib.attributes.BlockEntityAttributeAdder.BlockEntityAttributeAdderFN;
 import alexiil.mc.lib.attributes.fatjar.FatJarChecker;
 import alexiil.mc.lib.attributes.misc.AbstractItemBasedAttribute;
 import alexiil.mc.lib.attributes.misc.LibBlockAttributes.LbaModule;
+import concern.BlockPos;
+import concern.Direction;
+import concern.EmptyVoxelShape;
+import io.github.minecraftcursedlegacy.api.registry.Id;
+import io.github.minecraftcursedlegacy.api.registry.Registries;
 import alexiil.mc.lib.attributes.misc.LimitedConsumer;
 import alexiil.mc.lib.attributes.misc.Reference;
 import alexiil.mc.lib.attributes.misc.UnmodifiableRef;
 
-/** The central holding class for all attribute instances.
+/**
+ * The central holding class for all attribute instances.
  * <p>
- * An {@link Attribute} can be of a single {@link Class} that should be accessible from blocks or items. Instances can
- * be created from the various static factory methods in {@link Attributes}. Due to the different subclasses no registry
- * is provided, so instances should be stored in a public static final field somewhere near the target class.
+ * An {@link Attribute} can be of a single {@link Class} that should be
+ * accessible from blocks or items. Instances can be created from the various
+ * static factory methods in {@link Attributes}. Due to the different subclasses
+ * no registry is provided, so instances should be stored in a public static
+ * final field somewhere near the target class.
  * <p>
  * <h1>Usage</h1> All attributes offer "getAll" and "getFirstOrNull" methods.
  * <p>
- * <h1>Blocks</h1> Instances can be obtained from blocks with the {@link #getAll(World, BlockPos, SearchOption)} or
- * {@link #getFirstOrNull(World, BlockPos, SearchOption)} methods, although the {@link SearchOption} can be omitted (or
- * passed as null) if you don't wish to restrict what attributes are returned to you.<br>
- * For convenience there is also a "getAllFromNeighbour" (and getFirstOrNullFromNeighbour) which takes a
- * {@link BlockEntity} to search from, and a {@link Direction} to search in.
+ * <h1>Blocks</h1> Instances can be obtained from blocks with the
+ * {@link #getAll(World, BlockPos, SearchOption)} or
+ * {@link #getFirstOrNull(World, BlockPos, SearchOption)} methods, although the
+ * {@link SearchOption} can be omitted (or passed as null) if you don't wish to
+ * restrict what attributes are returned to you.<br>
+ * For convenience there is also a "getAllFromNeighbour" (and
+ * getFirstOrNullFromNeighbour) which takes a {@link BlockEntity} to search
+ * from, and a {@link Direction} to search in.
  * <p>
- * <h1>Items</h1> Instances can be obtained from items with the {@link #getAll(Reference, LimitedConsumer, Predicate)}
- * or {@link #getFirstOrNull(Reference, LimitedConsumer, Predicate)} methods, however the predicate may be omitted (or
- * passed as null) if you f you don't wish to restrict what attributes are returned to you.<br>
+ * <h1>Items</h1> Instances can be obtained from items with the
+ * {@link #getAll(Reference, LimitedConsumer, Predicate)} or
+ * {@link #getFirstOrNull(Reference, LimitedConsumer, Predicate)} methods,
+ * however the predicate may be omitted (or passed as null) if you f you don't
+ * wish to restrict what attributes are returned to you.<br>
  * <br>
- * {@link ItemStack}s don't inherently have any information about what they are stored in (unlike blocks) so instead of
- * a world and block position we use a {@link Reference} for the current stack, and a {@link LimitedConsumer} for the
- * excess. The {@link Reference} may contain an item with any count, although generally only the uppermost item on the
- * stack will be used by attributes. Attribute instances which modify the {@link ItemStack} are highly encouraged to
- * extend {@link AbstractItemBasedAttribute} to help manage returning the modified {@link ItemStack} to the reference
- * and limited consumer.
+ * {@link ItemStack}s don't inherently have any information about what they are
+ * stored in (unlike blocks) so instead of a world and block position we use a
+ * {@link Reference} for the current stack, and a {@link LimitedConsumer} for
+ * the excess. The {@link Reference} may contain an item with any count,
+ * although generally only the uppermost item on the stack will be used by
+ * attributes. Attribute instances which modify the {@link ItemStack} are highly
+ * encouraged to extend {@link AbstractItemBasedAttribute} to help manage
+ * returning the modified {@link ItemStack} to the reference and limited
+ * consumer.
  * <p>
- * <h1>Entities</h1> Currently LBA doesn't offer support for entities, although it is planned.
+ * <h1>Entities</h1> Currently LBA doesn't offer support for entities, although
+ * it is planned.
  * <p>
- * <h1>Subclasses</h1> There are 2 provided subclasses of {@link Attribute}: {@link DefaultedAttribute} and
- * {@link CombinableAttribute}.
+ * <h1>Subclasses</h1> There are 2 provided subclasses of {@link Attribute}:
+ * {@link DefaultedAttribute} and {@link CombinableAttribute}.
  * <p>
- * <h1>Custom Adders</h1> If the target block or item doesn't implement {@link AttributeProvider} or
- * {@link AttributeProviderItem} (or those methods don't offer the attribute instance that you need) then you can create
- * a custom adder for each block or item that you need. The old (deprecated) method of adding custom attribute adders
- * called every single one in the order that they were added. The new method however only matches a single one (per
+ * <h1>Custom Adders</h1> If the target block or item doesn't implement
+ * {@link AttributeProvider} or {@link AttributeProviderItem} (or those methods
+ * don't offer the attribute instance that you need) then you can create a
+ * custom adder for each block or item that you need. The old (deprecated)
+ * method of adding custom attribute adders called every single one in the order
+ * that they were added. The new method however only matches a single one (per
  * attribute), and has the following order:
  * <ol>
- * <li>If the block or item implements {@link AttributeProvider} or {@link AttributeProviderItem} directly then is is
- * used first. If that adder didn't add anything then the next steps aren't skipped (so it will exit early if the
- * block/item provided any implementations itself, otherwise it will continue to try to find one).</li>
- * <li>If the block is meant to have a {@link BlockEntity} ({@link Block#hasBlockEntity()}), and a {@link BlockEntity}
- * is present in the world, and it implements {@link AttributeProviderBlockEntity} then it is checked second. If that
- * adder didn't add anything then the next steps aren't skipped (so it will exit early if the block entity provided any
+ * <li>If the block or item implements {@link AttributeProvider} or
+ * {@link AttributeProviderItem} directly then is is used first. If that adder
+ * didn't add anything then the next steps aren't skipped (so it will exit early
+ * if the block/item provided any implementations itself, otherwise it will
+ * continue to try to find one).</li>
+ * <li>If the block is meant to have a {@link BlockEntity}
+ * ({@link Block#hasBlockEntity()}), and a {@link BlockEntity} is present in the
+ * world, and it implements {@link AttributeProviderBlockEntity} then it is
+ * checked second. If that adder didn't add anything then the next steps aren't
+ * skipped (so it will exit early if the block entity provided any
  * implementations itself, otherwise it will continue to try to find one).</li>
  * <li>{@link AttributeSourceType#INSTANCE} implementations are considered:
  * <ol>
  * <li>If the block/item has an exact mapping registered in
- * {@link #setBlockAdder(AttributeSourceType, Block, CustomAttributeAdder)} then it is used.</li>
+ * {@link #setBlockAdder(AttributeSourceType, Block, CustomAttributeAdder)} then
+ * it is used.</li>
  * <li>Next, any predicate adders
- * ({@link #addBlockPredicateAdder(AttributeSourceType, boolean, Predicate, CustomAttributeAdder)}) are considered (if
- * they passed "true" for "specific").</li>
+ * ({@link #addBlockPredicateAdder(AttributeSourceType, boolean, Predicate, CustomAttributeAdder)})
+ * are considered (if they passed "true" for "specific").</li>
  * <li>The exact class mapped by
- * ({@link #putBlockClassAdder(AttributeSourceType, Class, boolean, CustomAttributeAdder)}) is considered (if they
- * passed "false" for "matchSubclasses").</li>
+ * ({@link #putBlockClassAdder(AttributeSourceType, Class, boolean, CustomAttributeAdder)})
+ * is considered (if they passed "false" for "matchSubclasses").</li>
  * <li>Any super-classes or interfaces mapped by
- * ({@link #putBlockClassAdder(AttributeSourceType, Class, boolean, CustomAttributeAdder)}) is considered (if they
- * passed "true" for "matchSubclasses").</li>
+ * ({@link #putBlockClassAdder(AttributeSourceType, Class, boolean, CustomAttributeAdder)})
+ * is considered (if they passed "true" for "matchSubclasses").</li>
  * <li>Finally, any predicate adders
- * ({@link #addBlockPredicateAdder(AttributeSourceType, boolean, Predicate, CustomAttributeAdder)}) are considered (if
- * they passed "false" for "specific").</li>
+ * ({@link #addBlockPredicateAdder(AttributeSourceType, boolean, Predicate, CustomAttributeAdder)})
+ * are considered (if they passed "false" for "specific").</li>
  * </ol>
  * </li>
- * <li>{@link AttributeSourceType#COMPAT_WRAPPER} implementations are considered, in the same order as
- * {@link AttributeSourceType#INSTANCE} above.</li>
- * <li>Finally everything registered to {@link #appendBlockAdder(CustomAttributeAdder)} is called. (Unlike every other
- * adder above, every single one is called).</li>
+ * <li>{@link AttributeSourceType#COMPAT_WRAPPER} implementations are
+ * considered, in the same order as {@link AttributeSourceType#INSTANCE}
+ * above.</li>
+ * <li>Finally everything registered to
+ * {@link #appendBlockAdder(CustomAttributeAdder)} is called. (Unlike every
+ * other adder above, every single one is called).</li>
  * </ol>
  */
 public class Attribute<T> {
     public final Class<T> clazz;
 
     // TODO: Rename AdderList!
-    private final AdderList<Block, Block, CustomAttributeAdder<T>> customBlockList;
-    private final AdderList<Item, Item, ItemAttributeAdder<T>> customItemList;
-    private final AdderList<BlockEntityType<?>, BlockEntity, BlockEntityAttributeAdder<T, ?>> customBlockEntityList;
+    private final AdderList<Tile, Tile, CustomAttributeAdder<T>> customBlockList;
+    private final AdderList<ItemType, ItemType, ItemAttributeAdder<T>> customItemList;
+    private final AdderList<Class<? extends TileEntity>, TileEntity, BlockEntityAttributeAdder<T, ?>> customBlockEntityList;
     // FIXME: Add Caching!
     private final ArrayList<CustomAttributeAdder<T>> fallbackBlockAdders = new ArrayList<>();
     private final ArrayList<ItemAttributeAdder<T>> fallbackItemAdders = new ArrayList<>();
 
     protected Attribute(Class<T> clazz) {
         this.clazz = clazz;
-        customBlockList = new AdderList<>(clazz.getName(), Block.class, NullAttributeAdder.get(), Attribute::getName);
-        customItemList = new AdderList<>(clazz.getName(), Item.class, NullAttributeAdder.get(), Attribute::getName);
+        customBlockList = new AdderList<>(clazz.getName(), Tile.class, NullAttributeAdder.get(), Attribute::getName);
+        customItemList = new AdderList<>(clazz.getName(), ItemType.class, NullAttributeAdder.get(), Attribute::getName);
         customBlockEntityList
-            = new AdderList<>(clazz.getName(), BlockEntity.class, NullAttributeAdder.get(), Attribute::getName);
+            = new AdderList<>(clazz.getName(), TileEntity.class, NullAttributeAdder.get(), Attribute::getName);
 
         customBlockList.baseOffset = 0;
         customBlockList.priorityMultiplier = 2;
@@ -164,15 +183,15 @@ public class Attribute<T> {
 
     /** Sets the {@link CustomAttributeAdder} for the given block, which is only used if the block in question doesn't
      * implement {@link AttributeProvider}. Only one {@link CustomAttributeAdder} may respond to a singular block. */
-    public final void setBlockAdder(AttributeSourceType sourceType, Block block, CustomAttributeAdder<T> adder) {
+    public final void setBlockAdder(AttributeSourceType sourceType, Tile block, CustomAttributeAdder<T> adder) {
         customBlockList.putExact(sourceType, block, adder);
     }
 
     /** Sets the {@link BlockEntityAttributeAdder} for the given block entity type, which is only used if the block
      * entity in question doesn't implement {@link AttributeProviderBlockEntity}. Only one
      * {@link BlockEntityAttributeAdder} may respond to a singular block. */
-    public final <BE extends BlockEntity> void setBlockEntityAdder(
-        AttributeSourceType sourceType, BlockEntityType<BE> type, BlockEntityAttributeAdder<T, BE> adder
+    public final <BE extends TileEntity> void setBlockEntityAdder(
+        AttributeSourceType sourceType, Class<BE> type, BlockEntityAttributeAdder<T, BE> adder
     ) {
         customBlockEntityList.putExact(sourceType, type, adder);
     }
@@ -180,8 +199,8 @@ public class Attribute<T> {
     /** Sets the {@link BlockEntityAttributeAdder} for the given block entity type, which is only used if the block
      * entity in question doesn't implement {@link AttributeProviderBlockEntity}. Only one
      * {@link BlockEntityAttributeAdder} may respond to a singular block. */
-    public final <BE extends BlockEntity> void setBlockEntityAdder(
-        AttributeSourceType sourceType, BlockEntityType<BE> type, Class<BE> clazz,
+    public final <BE extends TileEntity> void setBlockEntityAdder(
+        AttributeSourceType sourceType, Class<BE> type, Class<BE> clazz,
         BlockEntityAttributeAdderFN<T, BE> adder
     ) {
         BlockEntityAttributeAdder<T, BE> real = BlockEntityAttributeAdder.ofTyped(clazz, adder);
@@ -192,14 +211,14 @@ public class Attribute<T> {
      * entity in question doesn't implement {@link AttributeProviderBlockEntity}. Only one
      * {@link BlockEntityAttributeAdder} may respond to a singular block. */
     public final void setBlockEntityAdderFN(
-        AttributeSourceType sourceType, BlockEntityType<?> type, BlockEntityAttributeAdderFN<T, BlockEntity> adder
+        AttributeSourceType sourceType, Class<? extends TileEntity> type, BlockEntityAttributeAdderFN<T, TileEntity> adder
     ) {
         customBlockEntityList.putExact(sourceType, type, BlockEntityAttributeAdder.ofBasic(adder));
     }
 
     /** Sets the {@link ItemAttributeAdder} for the given item, which is only used if the item in question doesn't
      * implement {@link AttributeProviderItem}. Only one {@link CustomAttributeAdder} may respond to a singular item. */
-    public final void setItemAdder(AttributeSourceType sourceType, Item item, ItemAttributeAdder<T> adder) {
+    public final void setItemAdder(AttributeSourceType sourceType, ItemType item, ItemAttributeAdder<T> adder) {
         customItemList.putExact(sourceType, item, adder);
     }
 
@@ -207,7 +226,7 @@ public class Attribute<T> {
      * {@link #setBlockAdder(AttributeSourceType, Block, CustomAttributeAdder)}, otherwise they are called after the
      * class-based mappings have been called. */
     public final void addBlockPredicateAdder(
-        AttributeSourceType sourceType, boolean specific, Predicate<Block> filter, CustomAttributeAdder<T> adder
+        AttributeSourceType sourceType, boolean specific, Predicate<Tile> filter, CustomAttributeAdder<T> adder
     ) {
         customBlockList.addPredicateBased(sourceType, specific, filter, adder);
     }
@@ -216,8 +235,8 @@ public class Attribute<T> {
      * {@link #setBlockEntityAdder(AttributeSourceType, BlockEntityType, BlockEntityAttributeAdder)}, otherwise they are
      * called after the class-based mappings have been called. */
     public final void addBlockEntityPredicateAdder(
-        AttributeSourceType sourceType, boolean specific, Predicate<BlockEntityType<?>> filter,
-        BlockEntityAttributeAdderFN<T, BlockEntity> adder
+        AttributeSourceType sourceType, boolean specific, Predicate<Class<? extends TileEntity>> filter,
+        BlockEntityAttributeAdderFN<T, TileEntity> adder
     ) {
         customBlockEntityList.addPredicateBased(sourceType, specific, filter, BlockEntityAttributeAdder.ofBasic(adder));
     }
@@ -226,7 +245,7 @@ public class Attribute<T> {
      * {@link #setItemAdder(AttributeSourceType, Item, ItemAttributeAdder)}, otherwise they are called after the
      * class-based mappings have been called. */
     public final void addItemPredicateAdder(
-        AttributeSourceType sourceType, boolean specific, Predicate<Item> filter, ItemAttributeAdder<T> adder
+        AttributeSourceType sourceType, boolean specific, Predicate<ItemType> filter, ItemAttributeAdder<T> adder
     ) {
         customItemList.addPredicateBased(sourceType, specific, filter, adder);
     }
@@ -297,18 +316,18 @@ public class Attribute<T> {
     //
     // ##########################
 
-    final void addAll(World world, BlockPos pos, AttributeList<T> list) {
-        BlockState state = world.getBlockState(pos);
-        Block block = state.getBlock();
+    final void addAll(Level world, BlockPos pos, AttributeList<T> list) {
+        int tile_id = world.getTileId(pos.x, pos.y, pos.z);
+        Tile block = Registries.TILE.getBySerialisedId(tile_id);
 
         if (block instanceof AttributeProvider) {
-            ((AttributeProvider) block).addAllAttributes(world, pos, state, list);
+            ((AttributeProvider) block).addAllAttributes(world, pos, world.getTileMeta(pos.x, pos.y, pos.z), list);
             if (list.hasOfferedAny()) {
                 return;
             }
         }
 
-        BlockEntity be = block.hasBlockEntity() ? world.getBlockEntity(pos) : null;
+        TileEntity be = Tile.HAS_TILE_ENTITY[tile_id] ? world.getTileEntity(pos.x, pos.y, pos.z) : null;
         if (be instanceof AttributeProviderBlockEntity) {
             ((AttributeProviderBlockEntity) be).addAllAttributes(list);
             if (list.hasOfferedAny()) {
@@ -318,18 +337,18 @@ public class Attribute<T> {
 
         ValueEntry<CustomAttributeAdder<T>> customBlock = customBlockList.getEntry(block, block.getClass());
         if (customBlock.priority < 8) {
-            customBlock.value.addAll(world, pos, state, list);
+            customBlock.value.addAll(world, pos, world.getTileMeta(pos.x, pos.y, pos.z), list);
             return;
         }
 
         if (be == null) {
             if (customBlock.priority < AdderList.NULL_PRIORITY) {
-                customBlock.value.addAll(world, pos, state, list);
+                customBlock.value.addAll(world, pos, world.getTileMeta(pos.x, pos.y, pos.z), list);
                 return;
             }
         } else {
             ValueEntry<BlockEntityAttributeAdder<T, ?>> customEntity
-                = customBlockEntityList.getEntry(be.getType(), be.getClass());
+                = customBlockEntityList.getEntry(be.getClass(), be.getClass());
 
             if (customEntity.priority < customBlock.priority) {
                 addAll(customEntity.value, be, list);
@@ -337,22 +356,22 @@ public class Attribute<T> {
             }
 
             if (customBlock.priority < AdderList.NULL_PRIORITY) {
-                customBlock.value.addAll(world, pos, state, list);
+                customBlock.value.addAll(world, pos, world.getTileMeta(pos.x, pos.y, pos.z), list);
                 return;
             }
         }
 
         for (CustomAttributeAdder<T> custom : fallbackBlockAdders) {
-            custom.addAll(world, pos, state, list);
+            custom.addAll(world, pos, world.getTileMeta(pos.x, pos.y, pos.z), list);
         }
     }
 
-    private <BE> void addAll(BlockEntityAttributeAdder<T, BE> value, BlockEntity be, AttributeList<T> to) {
+    private <BE> void addAll(BlockEntityAttributeAdder<T, BE> value, TileEntity be, AttributeList<T> to) {
         value.addAll(value.getBlockEntityClass().cast(be), to);
     }
 
     /** @return A complete {@link AttributeList} of every attribute instance that can be found. */
-    public final AttributeList<T> getAll(World world, BlockPos pos) {
+    public final AttributeList<T> getAll(Level world, BlockPos pos) {
         return getAll(world, pos, null);
     }
 
@@ -361,9 +380,10 @@ public class Attribute<T> {
      *            possible {@link SearchOption}'s is in {@link SearchOptions}.
      * @return A complete {@link AttributeList} of every attribute instance that can be found with the supplied search
      *         parameters. */
-    public final AttributeList<T> getAll(World world, BlockPos pos, SearchOption<? super T> searchParam) {
-        VoxelShape blockShape = world.getBlockState(pos).getOutlineShape(world, pos);
-        AttributeList<T> list = new AttributeList<>(this, searchParam, blockShape);
+    public final AttributeList<T> getAll(Level world, BlockPos pos, SearchOption<? super T> searchParam) {
+        // VoxelShape blockShape = world.getBlockState(pos).getOutlineShape(world, pos);
+        // AttributeList<T> list = new AttributeList<>(this, searchParam, blockShape);
+        AttributeList<T> list = new AttributeList<>(this, searchParam, new EmptyVoxelShape());
         addAll(world, pos, list);
         list.finishAdding();
         return list;
@@ -376,14 +396,14 @@ public class Attribute<T> {
      * AttributeList&lt;T&gt; list = attr.{@link #getAll(World, BlockPos, SearchOption) getAll}(be.getWorld(),
      * be.getPos().offset(dir), {@link SearchOptions#inDirection(Direction) SearchOptions.inDirection}(dir)); </br>
      */
-    public final AttributeList<T> getAllFromNeighbour(BlockEntity be, Direction dir) {
-        return getAll(be.getWorld(), be.getPos().offset(dir), SearchOptions.inDirection(dir));
+    public final AttributeList<T> getAllFromNeighbour(TileEntity be, Direction dir) {
+        return getAll(be.level, new BlockPos(be.x, be.y, be.z).offset(dir), SearchOptions.inDirection(dir));
     }
 
     /** @return The first attribute instance (as obtained by {@link #getAll(World, BlockPos)}), or null if this didn't
      *         find any instances. */
     @Nullable
-    public final T getFirstOrNull(World world, BlockPos pos) {
+    public final T getFirstOrNull(Level world, BlockPos pos) {
         return getFirstOrNull(world, pos, null);
     }
 
@@ -393,7 +413,7 @@ public class Attribute<T> {
      * @return The first attribute instance (as obtained by {@link #getAll(World, BlockPos, SearchOption)}), or null if
      *         the search didn't find any attribute instances at the specified position. */
     @Nullable
-    public final T getFirstOrNull(World world, BlockPos pos, @Nullable SearchOption<? super T> searchParam) {
+    public final T getFirstOrNull(Level world, BlockPos pos, @Nullable SearchOption<? super T> searchParam) {
         return getAll(world, pos, searchParam).getFirstOrNull();
     }
 
@@ -405,8 +425,8 @@ public class Attribute<T> {
      * be.getPos().offset(dir), {@link SearchOptions#inDirection(Direction) SearchOptions.inDirection}(dir)); </br>
      */
     @Nullable
-    public final T getFirstOrNullFromNeighbour(BlockEntity be, Direction dir) {
-        return getFirstOrNull(be.getWorld(), be.getPos().offset(dir), SearchOptions.inDirection(dir));
+    public final T getFirstOrNullFromNeighbour(TileEntity be, Direction dir) {
+        return getFirstOrNull(be.level, new BlockPos(be.x, be.y, be.z).offset(dir), SearchOptions.inDirection(dir));
     }
 
     // ##########################
@@ -415,9 +435,9 @@ public class Attribute<T> {
     //
     // ##########################
 
-    final void addAll(Reference<ItemStack> stackRef, LimitedConsumer<ItemStack> excess, ItemAttributeList<T> list) {
-        ItemStack stack = stackRef.get();
-        Item item = stack.getItem();
+    final void addAll(Reference<ItemInstance> stackRef, LimitedConsumer<ItemInstance> excess, ItemAttributeList<T> list) {
+        ItemInstance stack = stackRef.get();
+        ItemType item = Registries.ITEM_TYPE.getBySerialisedId(stack.itemId);
 
         if (item instanceof AttributeProviderItem) {
             int offeredBefore = list.getOfferedCount();
@@ -446,7 +466,7 @@ public class Attribute<T> {
      *            returned.
      * @return A complete {@link AttributeList} of every attribute instance that can be found in the given
      *         {@link ItemStack}. */
-    public final ItemAttributeList<T> getAll(ItemStack unmodifiableStack) {
+    public final ItemAttributeList<T> getAll(ItemInstance unmodifiableStack) {
         return getAll(new UnmodifiableRef<>(unmodifiableStack), null, null);
     }
 
@@ -457,7 +477,7 @@ public class Attribute<T> {
      *            then changes would be correctly reflected in the backing inventory).
      * @return A complete {@link AttributeList} of every attribute instance that can be found in the given
      *         {@link ItemStack}. */
-    public final ItemAttributeList<T> getAll(Reference<ItemStack> stackRef) {
+    public final ItemAttributeList<T> getAll(Reference<ItemInstance> stackRef) {
         return getAll(stackRef, LimitedConsumer.rejecting(), null);
     }
 
@@ -467,7 +487,7 @@ public class Attribute<T> {
      *            accepting them into the list. A null value equals no filter, which will not block any values.
      * @return A complete {@link AttributeList} of every attribute instance that can be found in the given
      *         {@link ItemStack}. */
-    public final ItemAttributeList<T> getAll(Reference<ItemStack> stackRef, @Nullable Predicate<T> filter) {
+    public final ItemAttributeList<T> getAll(Reference<ItemInstance> stackRef, @Nullable Predicate<T> filter) {
         return getAll(stackRef, LimitedConsumer.rejecting(), filter);
     }
 
@@ -482,7 +502,7 @@ public class Attribute<T> {
      *            value will default to {@link LimitedConsumer#rejecting()}.
      * @return A complete {@link AttributeList} of every attribute instance that can be found in the given
      *         {@link ItemStack}. */
-    public final ItemAttributeList<T> getAll(Reference<ItemStack> stackRef, LimitedConsumer<ItemStack> excess) {
+    public final ItemAttributeList<T> getAll(Reference<ItemInstance> stackRef, LimitedConsumer<ItemInstance> excess) {
         return getAll(stackRef, excess, null);
     }
 
@@ -500,7 +520,7 @@ public class Attribute<T> {
      * @return A complete {@link AttributeList} of every attribute instance that can be found in the given
      *         {@link ItemStack}. */
     public final ItemAttributeList<T> getAll(
-        Reference<ItemStack> stackRef, LimitedConsumer<ItemStack> excess, @Nullable Predicate<T> filter
+        Reference<ItemInstance> stackRef, LimitedConsumer<ItemInstance> excess, @Nullable Predicate<T> filter
     ) {
 
         if (excess == null) {
@@ -524,7 +544,7 @@ public class Attribute<T> {
      * @return The first attribute instance found by {@link #getAll(ItemStack)}, or null if none were found in the given
      *         {@link ItemStack}. */
     @Nullable
-    public final T getFirstOrNull(ItemStack unmodifiableStack) {
+    public final T getFirstOrNull(ItemInstance unmodifiableStack) {
         return getAll(unmodifiableStack).getFirstOrNull();
     }
 
@@ -537,7 +557,7 @@ public class Attribute<T> {
      * @return The first attribute instance found by {@link #getAll(Reference)}, or null if none were found in the given
      *         {@link ItemStack}. */
     @Nullable
-    public final T getFirstOrNull(Reference<ItemStack> stackRef) {
+    public final T getFirstOrNull(Reference<ItemInstance> stackRef) {
         return getAll(stackRef).getFirstOrNull();
     }
 
@@ -549,7 +569,7 @@ public class Attribute<T> {
      * @return The first attribute instance found by {@link #getAll(Reference, Predicate)}, or null if none were found
      *         in the given {@link ItemStack}. */
     @Nullable
-    public final T getFirstOrNull(Reference<ItemStack> stackRef, @Nullable Predicate<T> filter) {
+    public final T getFirstOrNull(Reference<ItemInstance> stackRef, @Nullable Predicate<T> filter) {
         return getAll(stackRef, filter).getFirstOrNull();
     }
 
@@ -566,7 +586,7 @@ public class Attribute<T> {
      * @return The first attribute instance found by {@link #getAll(Reference, LimitedConsumer)}, or null if none were
      *         found in the given {@link ItemStack}. */
     @Nullable
-    public final T getFirstOrNull(Reference<ItemStack> stackRef, LimitedConsumer<ItemStack> excess) {
+    public final T getFirstOrNull(Reference<ItemInstance> stackRef, LimitedConsumer<ItemInstance> excess) {
         return getAll(stackRef, excess).getFirstOrNull();
     }
 
@@ -586,38 +606,25 @@ public class Attribute<T> {
      *         none were found in the given {@link ItemStack}. */
     @Nullable
     public final T getFirstOrNull(
-        Reference<ItemStack> stackRef, LimitedConsumer<ItemStack> excess, @Nullable Predicate<T> filter
+        Reference<ItemInstance> stackRef, LimitedConsumer<ItemInstance> excess, @Nullable Predicate<T> filter
     ) {
         return getAll(stackRef, excess, filter).getFirstOrNull();
     }
 
-    private static String getName(Block block) {
-        Identifier id = Registry.BLOCK.getId(block);
-        if (!Registry.BLOCK.getDefaultId().equals(id)) {
-            return id.toString();
-        } else {
-            return "UnknownBlock{" + block.getClass() + " @" + Integer.toHexString(System.identityHashCode(block))
-                + "}";
-        }
+    private static String getName(Tile block) {
+        Id id = Registries.TILE.getId(block);
+        if (id != null) return id.toString();
+        throw new RuntimeException("Tile Was Not In Registry Class:" + block.getClass().getName() + " Int Id: " + block.id);
     }
 
-    private static String getName(BlockEntityType<?> type) {
-        Identifier id = Registry.BLOCK_ENTITY_TYPE.getId(type);
-        if (id != null) {
-            return id.toString();
-        } else {
-            return "UnknownBlockEntity{" + type.getClass() + " @" + Integer.toHexString(System.identityHashCode(type))
-                + "}";
-        }
+    private static String getName(Class<? extends TileEntity> type) {
+        return type.getName();
     }
 
-    private static String getName(Item item) {
-        Identifier id = Registry.ITEM.getId(item);
-        if (!Registry.ITEM.getDefaultId().equals(id)) {
-            return id.toString();
-        } else {
-            return "UnknownItem{" + item.getClass() + " @" + Integer.toHexString(System.identityHashCode(item)) + "}";
-        }
+    private static String getName(ItemType item) {
+        Id id = Registries.ITEM_TYPE.getId(item);
+        if (id != null) return id.toString();
+        throw new RuntimeException("Item Was Not In Registry Class:" + item.getClass().getName() + " Int Id: " + item.id);
     }
 
     static {

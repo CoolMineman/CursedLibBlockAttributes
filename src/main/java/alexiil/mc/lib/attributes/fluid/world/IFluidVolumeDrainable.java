@@ -10,7 +10,7 @@ package alexiil.mc.lib.attributes.fluid.world;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.FluidDrainable;
 import net.minecraft.block.Waterloggable;
-import net.minecraft.util.math.BlockPos;
+import concern.BlockPos;
 import net.minecraft.world.WorldAccess;
 
 import alexiil.mc.lib.attributes.Simulation;

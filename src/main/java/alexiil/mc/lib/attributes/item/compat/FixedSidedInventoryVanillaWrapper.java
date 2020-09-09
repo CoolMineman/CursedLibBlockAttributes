@@ -9,7 +9,7 @@ package alexiil.mc.lib.attributes.item.compat;
 
 import net.minecraft.inventory.SidedInventory;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.Direction;
+import concern.Direction;
 
 import alexiil.mc.lib.attributes.item.FixedItemInv;
 

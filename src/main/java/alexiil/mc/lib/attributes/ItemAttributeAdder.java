@@ -11,7 +11,7 @@ import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
 
-import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemInstance;
 
 import alexiil.mc.lib.attributes.misc.LimitedConsumer;
 import alexiil.mc.lib.attributes.misc.Reference;
@@ -28,5 +28,5 @@ public interface ItemAttributeAdder<T> {
      *            modifying the stack directly.
      * @param excess If interacting with any of the returned attributes produces excess itemstacks then they should be
      *            added to this {@link Consumer}. */
-    void addAll(Reference<ItemStack> stack, @Nullable LimitedConsumer<ItemStack> excess, ItemAttributeList<T> to);
+    void addAll(Reference<ItemInstance> stack, @Nullable LimitedConsumer<ItemInstance> excess, ItemAttributeList<T> to);
 }

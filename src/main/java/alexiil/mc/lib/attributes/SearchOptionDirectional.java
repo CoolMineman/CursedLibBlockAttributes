@@ -10,7 +10,7 @@ package alexiil.mc.lib.attributes;
 import java.util.EnumMap;
 import java.util.function.Predicate;
 
-import net.minecraft.util.math.Direction;
+import concern.Direction;
 
 public class SearchOptionDirectional<T> extends SearchOption<T> {
 

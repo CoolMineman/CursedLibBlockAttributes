@@ -20,7 +20,7 @@ import net.minecraft.fluid.FlowableFluid;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.state.property.Properties;
-import net.minecraft.util.math.BlockPos;
+import concern.BlockPos;
 import net.minecraft.world.WorldAccess;
 
 import alexiil.mc.lib.attributes.Simulation;

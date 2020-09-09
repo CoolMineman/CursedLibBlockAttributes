@@ -15,7 +15,7 @@ import io.github.prospector.silk.fluid.FluidInstance;
 import io.github.prospector.silk.util.ActionType;
 
 import net.minecraft.fluid.Fluid;
-import net.minecraft.util.math.Direction;
+import concern.Direction;
 
 import alexiil.mc.lib.attributes.AttributeSourceType;
 import alexiil.mc.lib.attributes.Simulation;

@@ -9,8 +9,8 @@ package alexiil.mc.lib.attributes;
 
 import java.util.function.Predicate;
 
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.shape.VoxelShape;
+import concern.Direction;
+import concern.VoxelShape;
 
 public final class SearchOptionDirectionalVoxel<T> extends SearchOptionDirectional<T> {
 

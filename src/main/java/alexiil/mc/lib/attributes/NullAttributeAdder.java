@@ -10,7 +10,7 @@ package alexiil.mc.lib.attributes;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.BlockPos;
+import concern.BlockPos;
 import net.minecraft.world.World;
 
 import alexiil.mc.lib.attributes.misc.LimitedConsumer;

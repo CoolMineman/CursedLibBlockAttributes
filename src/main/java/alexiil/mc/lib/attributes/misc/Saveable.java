@@ -7,7 +7,7 @@
  */
 package alexiil.mc.lib.attributes.misc;
 
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.io.CompoundTag;
 
 /** An object that can be saved and loaded (in place, unlike fluid keys or volumes which must be loaded from a
  * specialised static method). */

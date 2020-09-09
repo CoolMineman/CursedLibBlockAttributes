@@ -11,6 +11,7 @@ import java.util.function.Predicate;
 
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityType;
+import net.minecraft.entity.TileEntity;
 
 /** Base interface to add attributes for {@link BlockEntity}s that you haven't defined.
  * <p>
@@ -57,10 +58,10 @@ public interface BlockEntityAttributeAdder<AT, BE> {
 
     /** Creates a full {@link BlockEntityAttributeAdder} from the {@link FunctionalInterface} variant, but only allows
      * targeting {@link BlockEntity} directly. */
-    public static <AT> BlockEntityAttributeAdder<AT, BlockEntity> ofBasic(
-        BlockEntityAttributeAdderFN<AT, BlockEntity> fn
+    public static <AT> BlockEntityAttributeAdder<AT, TileEntity> ofBasic(
+        BlockEntityAttributeAdderFN<AT, TileEntity> fn
     ) {
-        return new BeAdderBase<>(BlockEntity.class, fn);
+        return new BeAdderBase<>(TileEntity.class, fn);
     }
 
     /** Creates a full {@link BlockEntityAttributeAdder} from the {@link FunctionalInterface} variant, and a

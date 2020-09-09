@@ -22,14 +22,9 @@ import javax.annotation.Nullable;
 
 import net.fabricmc.loader.api.FabricLoader;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.InventoryProvider;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
-import net.minecraft.item.Item;
-
+import net.minecraft.tile.Tile;
 import alexiil.mc.lib.attributes.misc.LibBlockAttributes;
 
 /** Used by {@link Attribute} to manage the custom adder list.
@@ -222,25 +217,10 @@ final class AdderList<Instance, Cls, Adder> {
         }
 
         if (clazz.isAssignableFrom(usedClass)) {
-            if (
-                type == AttributeSourceType.COMPAT_WRAPPER && clazz == InventoryProvider.class
-                    && usedClass == Block.class && FabricLoader.getInstance().isModLoaded("universalcomponents")
-            ) {
-                if (!hasWarnedAboutUC) {
-                    hasWarnedAboutUC = true;
-                    // Basically nothing else we can do here
-                    LibBlockAttributes.LOGGER.warn(
-                        "[LibBlockAttributes] The class-based compatibility wrapper for InventoryProvider (" + value
-                            + ") will override every other wrapper for " + name
-                            + " as UniversalComponents makes every Block implement InventoryProvider!"
-                    );
-                }
-            } else {
                 throw new IllegalArgumentException(
                     "The given " + clazz + " is a superclass/superinterface of the base " + usedClass
                         + " - which won't work very well, because it will override everything else."
                 );
-            }
         }
 
         clearResolved();
