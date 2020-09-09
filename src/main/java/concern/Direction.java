@@ -6,5 +6,9 @@ public enum Direction {
     NORTH,
     SOUTH,
     EAST,
-    WEST
+    WEST;
+
+	public Direction getOpposite() {
+		return null;
+	}
 }
