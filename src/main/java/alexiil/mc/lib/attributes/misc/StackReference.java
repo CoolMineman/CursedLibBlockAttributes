@@ -7,8 +7,7 @@
  */
 package alexiil.mc.lib.attributes.misc;
 
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.slot.Slot;
+import net.minecraft.item.ItemInstance;
 
 /** Specialist {@link Reference} interface for {@link ItemStack}s. NOTE: You <em>cannot</em> assume that all
  * {@link Reference}s for {@link ItemStack}s will implement this, as this is only provided in the rare case that someone
@@ -17,4 +16,4 @@ import net.minecraft.screen.slot.Slot;
  * (For example {@link PlayerInvUtil#referenceSlot(net.minecraft.screen.slot.Slot)} uses this to attempt to convert a
  * {@link Slot} into a {@link StackReference} directly, rather than generate a potentially-inaccurate reference from the
  * slot. */
-public interface StackReference extends Reference<ItemStack> {}
+public interface StackReference extends Reference<ItemInstance> {}

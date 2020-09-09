@@ -7,8 +7,6 @@
  */
 package alexiil.mc.lib.attributes;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
 import net.minecraft.level.Level;
 import concern.BlockPos;
 

@@ -14,12 +14,11 @@ import java.util.function.Predicate;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.item.ItemStack;
 import concern.BlockPos;
 import concern.Direction;
-import net.minecraft.world.World;
-
+import net.minecraft.entity.TileEntity;
+import net.minecraft.item.ItemInstance;
+import net.minecraft.level.Level;
 import alexiil.mc.lib.attributes.misc.LimitedConsumer;
 import alexiil.mc.lib.attributes.misc.Reference;
 import alexiil.mc.lib.attributes.misc.UnmodifiableRef;
@@ -113,7 +112,7 @@ public class CombinableAttribute<T> extends DefaultedAttribute<T> {
     /** @return Either the {@link DefaultedAttribute #defaultValue defaultValue}, a single instance, or a
      *         {@link #combiner combined} instance depending on how many attribute instances could be found. */
     @Nonnull
-    public final T get(World world, BlockPos pos) {
+    public final T get(Level world, BlockPos pos) {
         return get(world, pos, null);
     }
 
@@ -123,7 +122,7 @@ public class CombinableAttribute<T> extends DefaultedAttribute<T> {
      * @return Either the {@link DefaultedAttribute #defaultValue defaultValue}, a single instance, or a
      *         {@link #combiner combined} instance depending on how many attribute instances could be found. */
     @Nonnull
-    public final T get(World world, BlockPos pos, SearchOption<? super T> searchParam) {
+    public final T get(Level world, BlockPos pos, SearchOption<? super T> searchParam) {
         return getAll(world, pos, searchParam).combine(this);
     }
 
@@ -135,8 +134,8 @@ public class CombinableAttribute<T> extends DefaultedAttribute<T> {
      * be.getPos().offset(dir), {@link SearchOptions#inDirection(Direction) SearchOptions.inDirection}(dir)); </br>
      */
     @Nonnull
-    public final T getFromNeighbour(BlockEntity be, Direction dir) {
-        return get(be.getWorld(), be.getPos().offset(dir), SearchOptions.inDirection(dir));
+    public final T getFromNeighbour(TileEntity be, Direction dir) {
+        return get(be.level, new BlockPos(be.x, be.y, be.z).offset(dir), SearchOptions.inDirection(dir));
     }
 
     // ##########################
@@ -156,7 +155,7 @@ public class CombinableAttribute<T> extends DefaultedAttribute<T> {
      * @return The combined attribute instance found by {@link #getAll(ItemStack)}, or the {@link #defaultValue} if none
      *         were found in the given {@link ItemStack}. */
     @Nonnull
-    public final T get(ItemStack unmodifiableStack) {
+    public final T get(ItemInstance unmodifiableStack) {
         return getAll(unmodifiableStack).combine(this);
     }
 
@@ -169,7 +168,7 @@ public class CombinableAttribute<T> extends DefaultedAttribute<T> {
      * @return The combined attribute instance found by {@link #getAll(Reference)}, or tge {@link #defaultValue} if none
      *         were found in the given {@link ItemStack}. */
     @Nonnull
-    public final T get(Reference<ItemStack> stackRef) {
+    public final T get(Reference<ItemInstance> stackRef) {
         return getAll(stackRef).combine(this);
     }
 
@@ -181,7 +180,7 @@ public class CombinableAttribute<T> extends DefaultedAttribute<T> {
      * @return The combined attribute instance found by {@link #getAll(Reference, Predicate)}, or the
      *         {@link #defaultValue} if none were found in the given {@link ItemStack}. */
     @Nonnull
-    public final T get(Reference<ItemStack> stackRef, @Nullable Predicate<T> filter) {
+    public final T get(Reference<ItemInstance> stackRef, @Nullable Predicate<T> filter) {
         return getAll(stackRef, filter).combine(this);
     }
 
@@ -198,7 +197,7 @@ public class CombinableAttribute<T> extends DefaultedAttribute<T> {
      * @return The combined attribute instance found by {@link #getAll(Reference, LimitedConsumer)}, or the
      *         {@link #defaultValue} if none were found in the given {@link ItemStack}. */
     @Nonnull
-    public final T get(Reference<ItemStack> stackRef, LimitedConsumer<ItemStack> excess) {
+    public final T get(Reference<ItemInstance> stackRef, LimitedConsumer<ItemInstance> excess) {
         return getAll(stackRef, excess).combine(this);
     }
 
@@ -218,7 +217,7 @@ public class CombinableAttribute<T> extends DefaultedAttribute<T> {
      *         {@link #defaultValue} if none were found in the given {@link ItemStack}. */
     @Nonnull
     public final T get(
-        Reference<ItemStack> stackRef, LimitedConsumer<ItemStack> excess, @Nullable Predicate<T> filter
+        Reference<ItemInstance> stackRef, LimitedConsumer<ItemInstance> excess, @Nullable Predicate<T> filter
     ) {
         return getAll(stackRef, excess, filter).combine(this);
     }

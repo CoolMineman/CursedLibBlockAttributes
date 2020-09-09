@@ -7,17 +7,16 @@
  */
 package alexiil.mc.lib.attributes;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.item.ItemStack;
+import net.minecraft.entity.TileEntity;
+import net.minecraft.item.ItemInstance;
+import net.minecraft.level.Level;
 import concern.BlockPos;
-import net.minecraft.world.World;
 
 import alexiil.mc.lib.attributes.misc.LimitedConsumer;
 import alexiil.mc.lib.attributes.misc.Reference;
 
 final class NullAttributeAdder<T>
-    implements CustomAttributeAdder<T>, ItemAttributeAdder<T>, BlockEntityAttributeAdder<T, BlockEntity> {
+    implements CustomAttributeAdder<T>, ItemAttributeAdder<T>, BlockEntityAttributeAdder<T, TileEntity> {
 
     private NullAttributeAdder() {}
 
@@ -30,22 +29,22 @@ final class NullAttributeAdder<T>
     }
 
     @Override
-    public void addAll(Reference<ItemStack> stack, LimitedConsumer<ItemStack> excess, ItemAttributeList<T> to) {
+    public void addAll(Reference<ItemInstance> stack, LimitedConsumer<ItemInstance> excess, ItemAttributeList<T> to) {
         // NO-OP
     }
 
     @Override
-    public void addAll(World world, BlockPos pos, BlockState state, AttributeList<T> to) {
+    public void addAll(Level world, BlockPos pos, int meta, AttributeList<T> to) {
         // NO-OP
     }
 
     @Override
-    public void addAll(BlockEntity blockEntity, AttributeList<T> to) {
+    public void addAll(TileEntity blockEntity, AttributeList<T> to) {
         // NO-OP
     }
 
     @Override
-    public Class<BlockEntity> getBlockEntityClass() {
-        return BlockEntity.class;
+    public Class<TileEntity> getBlockEntityClass() {
+        return TileEntity.class;
     }
 }

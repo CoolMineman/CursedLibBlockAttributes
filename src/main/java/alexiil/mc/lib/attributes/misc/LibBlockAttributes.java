@@ -12,10 +12,9 @@ import javax.annotation.Nullable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import io.github.minecraftcursedlegacy.api.registry.Id;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
-
-import net.minecraft.util.Identifier;
 
 public class LibBlockAttributes {
     private static final String MODID = "libblockattributes";
@@ -37,8 +36,8 @@ public class LibBlockAttributes {
             this.id = id;
         }
 
-        public Identifier id(String path) {
-            return new Identifier(id, path);
+        public Id id(String path) {
+            return new Id(id, path);
         }
 
         @Nullable
@@ -47,7 +46,7 @@ public class LibBlockAttributes {
         }
     }
 
-    public static Identifier id(String path) {
-        return new Identifier(MODID, path);
+    public static Id id(String path) {
+        return new Id(MODID, path);
     }
 }

@@ -7,9 +7,6 @@
  */
 package alexiil.mc.lib.attributes;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.entity.BlockEntity;
-
 /** A {@link BlockEntity} that contains attributes.
  * <p>
  * Note that {@link AttributeProvider} is called <em>before</em> this, if the {@link Block} implements it. However if

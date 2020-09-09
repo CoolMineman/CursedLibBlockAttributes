@@ -12,12 +12,11 @@ import java.util.function.Predicate;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.item.ItemStack;
 import concern.BlockPos;
 import concern.Direction;
-import net.minecraft.world.World;
-
+import net.minecraft.entity.TileEntity;
+import net.minecraft.item.ItemInstance;
+import net.minecraft.level.Level;
 import alexiil.mc.lib.attributes.misc.LimitedConsumer;
 import alexiil.mc.lib.attributes.misc.Reference;
 import alexiil.mc.lib.attributes.misc.UnmodifiableRef;
@@ -64,7 +63,7 @@ public class DefaultedAttribute<T> extends Attribute<T> {
     /** @return The first attribute instance (as obtained by {@link #getAll(World, BlockPos, SearchOption)}), or the
      *         {@link #defaultValue} if none were found. */
     @Nonnull
-    public final T getFirst(World world, BlockPos pos) {
+    public final T getFirst(Level world, BlockPos pos) {
         return getFirst(world, pos, null);
     }
 
@@ -74,7 +73,7 @@ public class DefaultedAttribute<T> extends Attribute<T> {
      * @return The first attribute instance (as obtained by {@link #getAll(World, BlockPos, SearchOption)}), or the
      *         {@link #defaultValue} if the search didn't find any attribute instances at the specified position. */
     @Nonnull
-    public final T getFirst(World world, BlockPos pos, SearchOption<? super T> searchParam) {
+    public final T getFirst(Level world, BlockPos pos, SearchOption<? super T> searchParam) {
         return getAll(world, pos, searchParam).getFirst(this);
     }
 
@@ -86,8 +85,8 @@ public class DefaultedAttribute<T> extends Attribute<T> {
      * be.getPos().offset(dir), {@link SearchOptions#inDirection(Direction) SearchOptions.inDirection}(dir)); </br>
      */
     @Nonnull
-    public final T getFirstFromNeighbour(BlockEntity be, Direction dir) {
-        return getFirst(be.getWorld(), be.getPos().offset(dir), SearchOptions.inDirection(dir));
+    public final T getFirstFromNeighbour(TileEntity be, Direction dir) {
+        return getFirst(be.level, new BlockPos(be.x, be.y, be.z).offset(dir), SearchOptions.inDirection(dir));
     }
 
     // ##########################
@@ -107,7 +106,7 @@ public class DefaultedAttribute<T> extends Attribute<T> {
      * @return The first attribute instance found by {@link #getAll(ItemStack)}, or the {@link #defaultValue} if none
      *         were found in the given {@link ItemStack}. */
     @Nonnull
-    public final T getFirst(ItemStack unmodifiableStack) {
+    public final T getFirst(ItemInstance unmodifiableStack) {
         return getAll(unmodifiableStack).getFirst(this);
     }
 
@@ -120,7 +119,7 @@ public class DefaultedAttribute<T> extends Attribute<T> {
      * @return The first attribute instance found by {@link #getAll(Reference)}, or tge {@link #defaultValue} if none
      *         were found in the given {@link ItemStack}. */
     @Nonnull
-    public final T getFirst(Reference<ItemStack> stackRef) {
+    public final T getFirst(Reference<ItemInstance> stackRef) {
         return getAll(stackRef).getFirst(this);
     }
 
@@ -132,7 +131,7 @@ public class DefaultedAttribute<T> extends Attribute<T> {
      * @return The first attribute instance found by {@link #getAll(Reference, Predicate)}, or the {@link #defaultValue}
      *         if none were found in the given {@link ItemStack}. */
     @Nonnull
-    public final T getFirst(Reference<ItemStack> stackRef, @Nullable Predicate<T> filter) {
+    public final T getFirst(Reference<ItemInstance> stackRef, @Nullable Predicate<T> filter) {
         return getAll(stackRef, filter).getFirst(this);
     }
 
@@ -149,7 +148,7 @@ public class DefaultedAttribute<T> extends Attribute<T> {
      * @return The first attribute instance found by {@link #getAll(Reference, LimitedConsumer)}, or the
      *         {@link #defaultValue} if none were found in the given {@link ItemStack}. */
     @Nonnull
-    public final T getFirst(Reference<ItemStack> stackRef, LimitedConsumer<ItemStack> excess) {
+    public final T getFirst(Reference<ItemInstance> stackRef, LimitedConsumer<ItemInstance> excess) {
         return getAll(stackRef, excess).getFirst(this);
     }
 
@@ -169,7 +168,7 @@ public class DefaultedAttribute<T> extends Attribute<T> {
      *         {@link #defaultValue} if none were found in the given {@link ItemStack}. */
     @Nonnull
     public final T getFirst(
-        Reference<ItemStack> stackRef, LimitedConsumer<ItemStack> excess, @Nullable Predicate<T> filter
+        Reference<ItemInstance> stackRef, LimitedConsumer<ItemInstance> excess, @Nullable Predicate<T> filter
     ) {
         return getAll(stackRef, excess, filter).getFirst(this);
     }

@@ -9,8 +9,6 @@ package alexiil.mc.lib.attributes;
 
 import java.util.function.Predicate;
 
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.entity.TileEntity;
 
 /** Base interface to add attributes for {@link BlockEntity}s that you haven't defined.

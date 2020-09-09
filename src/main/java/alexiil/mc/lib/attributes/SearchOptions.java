@@ -12,8 +12,6 @@ import java.util.function.Predicate;
 import concern.BlockPos;
 import concern.Direction;
 import concern.VoxelShape;
-import concern.VoxelShapes;
-import net.minecraft.world.World;
 
 /** Various methods for creating {@link SearchOption} instances. */
 public final class SearchOptions {
